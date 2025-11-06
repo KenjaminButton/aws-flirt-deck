@@ -1,3 +1,56 @@
-credentials.txt
-
+# My Custom Files:
 DEVNOTES.md
+
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+*.pyc
+
+# CDK
+cdk.out/
+.cdk.staging/
+cdk.context.json
+
+# Node
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# AWS
+.aws-sam/
+
+# Secrets
+credentials.txt
+aws-credentials-flirtdeck.txt
+secrets.txt
+*.pem
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
