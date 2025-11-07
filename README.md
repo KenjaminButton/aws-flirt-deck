@@ -14,3 +14,16 @@ Multi-tenant SaaS application for dating conversation assistance.
 
 ## Documentation
 Coming soon...
+
+
+
+### Notes: 
+
+```json
+// CDK tags planning for a later phase
+tags = {
+    "Project": "FlirtDeck",
+    "Environment": "Production",
+    "ManagedBy": "CDK"
+}
+```
