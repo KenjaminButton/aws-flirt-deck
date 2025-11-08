@@ -11,22 +11,36 @@ import aws_cdk as cdk
 
 # Import our custom stacks
 from infrastructure.database_stack import DatabaseStack
+from infrastructure.cognito_stack import CognitoStack
 
 # Create the CDK app instance
 # This is the root construct that contains all our stacks
 app = cdk.App()
 
+# Define the environment (account + region) for all stacks
+# This ensures consistency across deployments
+env = cdk.Environment(
+    account=os.getenv('CDK_DEFAULT_ACCOUNT'),  # Gets account from 'aws configure'
+    region='us-west-2'  # Hardcoded to us-west-2 per project requirements
+)
+
 # Deploy DatabaseStack to us-west-2
-# We explicitly set the region to ensure consistency across deployments
-# Environment is set using account/region from AWS CLI configuration
-DatabaseStack(
+# Creates DynamoDB table for multi-tenant data storage
+database_stack = DatabaseStack(
     app, 
     "DatabaseStack",
-    env=cdk.Environment(
-        account=os.getenv('CDK_DEFAULT_ACCOUNT'),  # Gets account from 'aws configure'
-        region='us-west-2'  # Hardcoded to us-west-2 per project requirements
-    ),
+    env=env,
     description="DynamoDB table for FlirtDeck multi-tenant data storage"
+)
+
+# Deploy CognitoStack to us-west-2
+# Creates User Pool with Google OAuth integration
+# Requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables
+cognito_stack = CognitoStack(
+    app,
+    "CognitoStack",
+    env=env,
+    description="Cognito User Pool with Google OAuth for user authentication"
 )
 
 # Synthesize all stacks into CloudFormation templates
