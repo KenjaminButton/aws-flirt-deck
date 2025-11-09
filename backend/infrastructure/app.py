@@ -12,6 +12,7 @@ import aws_cdk as cdk
 # Import our custom stacks
 from infrastructure.database_stack import DatabaseStack
 from infrastructure.cognito_stack import CognitoStack
+from infrastructure.api_stack import ApiStack
 
 # Create the CDK app instance
 # This is the root construct that contains all our stacks
@@ -42,6 +43,23 @@ cognito_stack = CognitoStack(
     env=env,
     description="Cognito User Pool with Google OAuth for user authentication"
 )
+
+# Deploy ApiStack to us-west-2
+# Creates API Gateway with Lambda functions
+# Depends on both DatabaseStack and CognitoStack
+api_stack = ApiStack(
+    app,
+    "ApiStack",
+    user_pool=cognito_stack.user_pool,  # Pass User Pool for authorization
+    table_name=database_stack.table.table_name,  # Pass table name for Lambda env vars
+    env=env,
+    description="API Gateway with Lambda functions for backend endpoints"
+)
+
+# Set stack dependencies
+# Ensures stacks are deployed in the correct order
+api_stack.add_dependency(database_stack)
+api_stack.add_dependency(cognito_stack)
 
 # Synthesize all stacks into CloudFormation templates
 # This generates the JSON templates that AWS will use to create resources
