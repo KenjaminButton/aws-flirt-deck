@@ -12,7 +12,7 @@ import aws_cdk as cdk
 # Import our custom stacks
 from infrastructure.database_stack import DatabaseStack
 from infrastructure.cognito_stack import CognitoStack
-from infrastructure.api_stack import ApiStack
+from backend.infrastructure.infrastructure.api_stack import ApiStack
 
 # Create the CDK app instance
 # This is the root construct that contains all our stacks
