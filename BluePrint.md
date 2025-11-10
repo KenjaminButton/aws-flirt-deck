@@ -1,5 +1,5 @@
-# FlirtDeck - Complete AWS Portfolio Project Blueprint
 ## Multi-Tenant SaaS with CI/CD & Full Observability
+# FlirtDeck - Complete AWS Portfolio Project Blueprint
 
 ---
 
@@ -79,8 +79,8 @@ QUESTIONS (hardcoded 250 questions)
 1. Clicks "Sign in with Google"
 2. Approves Google permissions
 3. Redirected to app (profile auto-created)
-4. Sees 4 category buttons: Light, Deep, Flirty, Creative
-5. Clicks "Flirty" → Gets random flirty question
+4. Sees 4 category buttons: Life, Random, Deep, Experiences
+5. Clicks "Deep" → Gets random Deep question
 6. "Use this question" → Prompted to create connection
 7. Names connection: "Sarah from Hinge"
 8. Logs: What Sarah said, What I said
@@ -360,15 +360,15 @@ curl https://YOUR-API-URL/prod/auth/me
 #### Day 8: Frontend Setup
 
 **Tasks:**
-- [ ] Initialize React app: `cd frontend && npm create vite@latest . -- --template react-ts`
-- [ ] Install dependencies:
+- [x] Initialize React app: `cd frontend && npm create vite@latest . -- --template react-ts`
+- [x] Install dependencies:
 ```bash
   npm install react-router-dom axios
-  npm install -D tailwindcss postcss autoprefixer
+  npm install -D tailwindcss@3 postcss autoprefixer # Make sure it is version 3, not 4. 
   npx tailwindcss init -p
 ```
-- [ ] Configure Tailwind in `tailwind.config.js`
-- [ ] Create `.env.local` with:
+- [x] Configure Tailwind in `tailwind.config.js`
+- [x] Create `.env.local` with:
 ```
   VITE_API_URL=https://your-api-url/prod
   VITE_COGNITO_USER_POOL_ID=us-west-2_xxxxx
@@ -376,16 +376,15 @@ curl https://YOUR-API-URL/prod/auth/me
   VITE_COGNITO_DOMAIN=flirtdeck-dev.auth.us-west-2.amazoncognito.com
   VITE_REDIRECT_URI=http://localhost:5173/auth/callback
 ```
-- [ ] Create TypeScript types: `src/types/index.ts` (User, Connection, Question, etc.)
-- [ ] Create API client: `src/api/client.ts` (Axios with auth interceptor)
-- [ ] Create Auth Context: `src/context/AuthContext.tsx`
+- [x] Create TypeScript types: `src/types/index.ts` (User, Connection, Question, etc.)
+- [x] Create API client: `src/api/client.ts` (Axios with auth interceptor)
+- [x] Create Auth Context: `src/context/AuthContext.tsx`
 
 **Verification:**
-- [ ] `npm run dev` starts app on localhost:5173
-- [ ] No TypeScript errors
+- [x] `npm run dev` starts app on localhost:5173
+- [x] No TypeScript errors
 
 ---
-
 #### Day 9: Login Page
 
 **Tasks:**
@@ -450,9 +449,11 @@ curl https://YOUR-API-URL/prod/auth/me
 - [ ] Create `shared/questions_data.py`:
 ```python
   QUESTIONS = [
-      {"id": "q001", "text": "If you could...", "category": "light"},
-      {"id": "q002", "text": "What's your...", "category": "deep"},
-      # ... 248 more
+      {"id": "q001", "text": "If you could...", "category": "life"},
+      {"id": "q002", "text": "What's your...", "category": "random"},
+      {"id": "q001", "text": "If you could...", "category": "deep"},
+      {"id": "q002", "text": "What's your...", "category": "experiences"},
+      # ... 166 more
   ]
 ```
 - [ ] Create seed script: `lambda_functions/questions/seed_data.py`
@@ -460,7 +461,7 @@ curl https://YOUR-API-URL/prod/auth/me
   - Writes to DynamoDB with proper keys:
     - PK: `QUESTION#q001`
     - SK: `METADATA`
-    - GSI1PK: `CATEGORY#light`
+    - GSI1PK: `CATEGORY#life`
     - GSI1SK: `QUESTION#001`
 - [ ] Run seed script manually (one-time):
 ```bash
@@ -468,10 +469,8 @@ curl https://YOUR-API-URL/prod/auth/me
 ```
 
 **Verification:**
-- [ ] Check DynamoDB: 250 items with PK starting with `QUESTION#`
+- [ ] Check DynamoDB: 170 items with PK starting with `QUESTION#`
 - [ ] Spot check: Query by category using GSI
-
-**💡 Tip:** Use ChatGPT/Claude to generate 250 icebreaker questions if needed.
 
 ---
 
@@ -483,7 +482,7 @@ curl https://YOUR-API-URL/prod/auth/me
   - Query DynamoDB using GSI: `CATEGORY#{category}`
   - Pick random question from results
   - Return question
-- [ ] Add route in API stack: `GET /questions/random?category=flirty`
+- [ ] Add route in API stack: `GET /questions/random?category=life`
 - [ ] Deploy
 - [ ] Create frontend: `src/pages/QuestionsPage.tsx`:
   - 4 category buttons
@@ -491,9 +490,9 @@ curl https://YOUR-API-URL/prod/auth/me
   - "Get Another" button (fetches new random)
 
 **Verification:**
-- [ ] Click "Light" → See random light question
-- [ ] Click "Get Another" → See different light question
-- [ ] All 4 categories work
+- [ ] Click "life" → See random light question
+- [ ] Click "Get Another" → See different "life" question
+- [ ] All 4 categories work (life, random, deep, experiences)
 
 **Checkpoint:** Can browse questions by category.
 
@@ -1650,3 +1649,5 @@ This project demonstrates you can:
 - Document and communicate effectively
 
 **You've got this. Now go build it!** 🚀
+
+
