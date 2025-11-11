@@ -423,19 +423,19 @@ curl https://YOUR-API-URL/prod/auth/me
 #### Day 10: Dashboard Skeleton
 
 **Tasks:**
-- [ ] Create `src/pages/DashboardPage.tsx`:
+- [x] Create `src/pages/DashboardPage.tsx`:
   - Shows user name and email
   - "Logout" button
   - Placeholder for questions/connections
-- [ ] Test full auth flow:
+- [x] Test full auth flow:
   - Login → Redirected to dashboard
   - Logout → Redirected to login
   - Try to access dashboard without login → Redirected to login
 
 **Verification:**
-- [ ] Full authentication flow works end-to-end
-- [ ] User profile displays correctly
-- [ ] Can logout and login again
+- [x] Full authentication flow works end-to-end
+- [x] User profile displays correctly
+- [x] Can logout and login again
 
 **⚠️ Checkpoint:** Authentication is 100% working before moving on. This is your foundation.
 

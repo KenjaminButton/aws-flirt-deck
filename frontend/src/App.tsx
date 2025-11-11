@@ -32,7 +32,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './components/auth/LoginPage';
 import CallbackPage from './pages/CallbackPage';
-
+import DashboardPage from './pages/DashboardPage';
 /**
  * ProtectedRoute Component
  * 
@@ -90,48 +90,48 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
  * This is a placeholder for Day 10 when we'll build the actual dashboard.
  * For now, it just shows that login worked and provides a logout button.
  */
-const DashboardPlaceholder = () => {
-  const { user, logout } = useAuth();
+// const DashboardPlaceholder = () => {
+//   const { user, logout } = useAuth();
   
-  return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            Welcome to FlirtDeck! 🎉
-          </h1>
+//   return (
+//     <div className="min-h-screen bg-gray-100 p-8">
+//       <div className="max-w-4xl mx-auto">
+//         <div className="bg-white rounded-lg shadow-md p-6">
+//           <h1 className="text-3xl font-bold text-gray-800 mb-4">
+//             Welcome to FlirtDeck! 🎉
+//           </h1>
           
-          <div className="mb-6">
-            <p className="text-gray-600 mb-2">
-              <strong>Email:</strong> {user?.email}
-            </p>
-            <p className="text-gray-600 mb-2">
-              <strong>Name:</strong> {user?.name || 'Not set'}
-            </p>
-            <p className="text-gray-600 mb-2">
-              <strong>Subscription:</strong> {user?.subscription_status}
-            </p>
-          </div>
+//           <div className="mb-6">
+//             <p className="text-gray-600 mb-2">
+//               <strong>Email:</strong> {user?.email}
+//             </p>
+//             <p className="text-gray-600 mb-2">
+//               <strong>Name:</strong> {user?.name || 'Not set'}
+//             </p>
+//             <p className="text-gray-600 mb-2">
+//               <strong>Subscription:</strong> {user?.subscription_status}
+//             </p>
+//           </div>
           
-          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-            <p className="text-sm text-blue-700">
-              ✅ <strong>Day 9 Complete!</strong> Authentication is working.
-              <br />
-              📅 <strong>Next:</strong> Day 10 - Build the actual dashboard with navigation.
-            </p>
-          </div>
+//           <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+//             <p className="text-sm text-blue-700">
+//               ✅ <strong>Day 9 Complete!</strong> Authentication is working.
+//               <br />
+//               📅 <strong>Next:</strong> Day 10 - Build the actual dashboard with navigation.
+//             </p>
+//           </div>
           
-          <button
-            onClick={logout}
-            className="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition duration-200"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+//           <button
+//             onClick={logout}
+//             className="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition duration-200"
+//           >
+//             Logout
+//           </button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 
 /**
  * AppContent Component
@@ -190,7 +190,7 @@ const AppContent = () => {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardPlaceholder />
+              <DashboardPage />
             </ProtectedRoute>
           }
         />
