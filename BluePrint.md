@@ -443,10 +443,10 @@ curl https://YOUR-API-URL/prod/auth/me
 
 ### **PHASE 3: Questions System** (Days 11-12) 🟢
 
-#### Day 11: Hardcode 250 Questions
+#### Day 11: Hardcode 12 Questions
 
 **Tasks:**
-- [ ] Create `shared/questions_data.py`:
+- [x] Create `shared/questions_data.py`:
 ```python
   QUESTIONS = [
       {"id": "q001", "text": "If you could...", "category": "life"},
@@ -456,21 +456,21 @@ curl https://YOUR-API-URL/prod/auth/me
       # ... 166 more
   ]
 ```
-- [ ] Create seed script: `lambda_functions/questions/seed_data.py`
+- [x] Create seed script: `lambda_functions/questions/seed_data.py`
   - Reads from questions_data.py
   - Writes to DynamoDB with proper keys:
     - PK: `QUESTION#q001`
     - SK: `METADATA`
     - GSI1PK: `CATEGORY#life`
     - GSI1SK: `QUESTION#001`
-- [ ] Run seed script manually (one-time):
+- [x] Run seed script manually (one-time):
 ```bash
   python lambda_functions/questions/seed_data.py
 ```
 
 **Verification:**
-- [ ] Check DynamoDB: 170 items with PK starting with `QUESTION#`
-- [ ] Spot check: Query by category using GSI
+- [x] Check DynamoDB: 12 items with PK starting with `QUESTION#` and 1 item for user (totaling 13 items)
+- [x] Spot check: Query by category using GSI `questions/test_gsi_query.py` file. 
 
 ---
 
