@@ -30,9 +30,10 @@ def success_response(
         "headers": {
             "Content-Type": "application/json",
             # CORS headers for browser requests
-            "Access-Control-Allow-Origin": "*",  # Will restrict this later
+            "Access-Control-Allow-Origin": "http://localhost:5173",
             "Access-Control-Allow-Headers": "Content-Type,Authorization",
-            "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+            "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+            "Access-Control-Allow-Credentials": "true"
         },
         "body": json.dumps(data)
     }
@@ -70,9 +71,10 @@ def error_response(
         "headers": {
             "Content-Type": "application/json",
             # CORS headers for browser requests
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": "http://localhost:5173",
             "Access-Control-Allow-Headers": "Content-Type,Authorization",
-            "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+            "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+            "Access-Control-Allow-Credentials": "true"
         },
         "body": json.dumps(error_body)
     }

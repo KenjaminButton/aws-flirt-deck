@@ -1,3 +1,5 @@
+# Force redeploy - updated CORS headers v2
+
 """
 GET /auth/me Lambda Handler
 

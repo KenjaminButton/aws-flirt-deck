@@ -388,27 +388,27 @@ curl https://YOUR-API-URL/prod/auth/me
 #### Day 9: Login Page
 
 **Tasks:**
-- [ ] Create `src/components/auth/LoginPage.tsx`:
+- [x] Create `src/components/auth/LoginPage.tsx`:
   - "Sign in with Google" button
   - Constructs Cognito Hosted UI URL with Google provider
   - Redirects to Google OAuth
-- [ ] Create `src/pages/auth/CallbackPage.tsx`:
+- [x] Create `src/pages/auth/CallbackPage.tsx`:
   - Handles OAuth callback with authorization code
   - Exchanges code for tokens via Cognito token endpoint
   - Stores tokens in localStorage
   - Calls `/auth/me` to get user profile
   - Redirects to dashboard
-- [ ] Create `src/App.tsx`:
+- [x] Create `src/App.tsx`:
   - React Router setup
   - Protected routes (require authentication)
   - Public routes: /login, /auth/callback
 
 **Verification:**
-- [ ] Can click "Sign in with Google"
-- [ ] Redirects to Google consent screen
-- [ ] After approval, redirects back to app
-- [ ] Check browser console: tokens stored
-- [ ] Check browser network tab: `/auth/me` called successfully
+- [x] Can click "Sign in with Google"
+- [x] Redirects to Google consent screen
+- [x] After approval, redirects back to app
+- [x] Check browser console: tokens stored
+- [x] Check browser network tab: `/auth/me` called successfully
 
 **⚠️ MAJOR Trouble Spot:** OAuth callback is tricky. Common issues:
 - Redirect URI mismatch → Check exact URL in Google Console matches

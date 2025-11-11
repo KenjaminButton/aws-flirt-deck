@@ -24,7 +24,7 @@
  * And the client automatically adds the auth token!
  */
 
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError} from 'axios';
 import type { ApiError } from '../types';
 
 // ============================================
@@ -84,7 +84,7 @@ const apiClient = axios.create({
  * Backend validates token and returns data
  */
 apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  (config) => {
     // Get the ID token from localStorage
     // This was stored during login (see AuthContext.tsx)
     const token = localStorage.getItem('idToken');
