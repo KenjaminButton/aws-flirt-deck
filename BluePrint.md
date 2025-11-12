@@ -129,44 +129,28 @@ cdk bootstrap aws://ACCOUNT-ID/us-west-2
 ---
 
 ## 📁 Project Structure
+
+
 ```
 flirtdeck/
 ├── .github/
 │   └── workflows/
-│       ├── backend-deploy.yml    # CI/CD for backend
-│       └── frontend-deploy.yml   # CI/CD for frontend
+│       ├── backend-deploy.yml        # CI/CD for backend
+│       └── frontend-deploy.yml       # CI/CD for frontend
 ├── backend/
-│   ├── infrastructure/           # CDK stacks
+│   ├── infrastructure/               # CDK app & stacks (do not change api_stack packaging)
 │   │   ├── infrastructure/
-│   │   │   ├── database_stack.py
-│   │   │   ├── cognito_stack.py
-│   │   │   ├── api_stack.py
-│   │   │   ├── frontend_stack.py
-│   │   │   ├── monitoring_stack.py
-│   │   │   └── cicd_stack.py
+│   │   │   └── api_stack.py
 │   │   └── app.py
-│   ├── lambda_functions/         # Lambda handlers
-│   │   ├── auth/
-│   │   │   └── get_me.py
-│   │   ├── questions/
-│   │   │   ├── get_random.py
-│   │   │   └── seed_data.py
-│   │   ├── connections/
-│   │   │   ├── create.py
-│   │   │   ├── list.py
-│   │   │   └── delete.py
-│   │   ├── usage/
-│   │   │   ├── create.py
-│   │   │   ├── list.py
-│   │   │   └── update.py
-│   │   └── billing/
-│   │       ├── create_checkout.py
-│   │       ├── webhook.py
-│   │       └── get_status.py
-│   └── shared/                   # Shared utilities
-│       ├── responses.py
-│       ├── dynamodb.py
-│       └── questions_data.py     # 250 questions hardcoded
+│   └── lambda_functions/             # CDK packages this entire folder for Lambdas
+│       ├── shared/                   # ← Shared utilities live here
+│       │   ├── responses.py
+│       │   ├── dynamodb.py
+│       │   └── questions_data.py     # 170 questions hardcoded
+│       ├── auth/
+│       │   └── get_me.py
+│       └── questions/
+│           └── get_random.py
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
@@ -181,7 +165,15 @@ flirtdeck/
 │   └── cost-analysis.md
 ├── .gitignore
 └── README.md
+
 ```
+
+Lambda packaging: CDK packages entire lambda_functions/ folder
+Handler format: auth.get_me.handler or questions.get_random.handler
+Imports in Lambda files: from shared.responses import ...
+
+NEVER change api_stack.py Lambda packaging without asking first.
+
 
 ---
 
