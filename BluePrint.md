@@ -469,22 +469,22 @@ curl https://YOUR-API-URL/prod/auth/me
 #### Day 12: Random Question API
 
 **Tasks:**
-- [ ] Create Lambda: `lambda_functions/questions/get_random.py`
+- [x] Create Lambda: `lambda_functions/questions/get_random.py`
   - Input: `category` (light/deep/flirty/creative)
   - Query DynamoDB using GSI: `CATEGORY#{category}`
   - Pick random question from results
   - Return question
-- [ ] Add route in API stack: `GET /questions/random?category=life`
-- [ ] Deploy
-- [ ] Create frontend: `src/pages/QuestionsPage.tsx`:
+- [x] Add route in API stack: `GET /questions/random?category=life`
+- [x] Deploy
+- [x] Create frontend: `src/pages/QuestionsPage.tsx`:
   - 4 category buttons
   - Click button → API call → Display random question
   - "Get Another" button (fetches new random)
 
 **Verification:**
-- [ ] Click "life" → See random light question
-- [ ] Click "Get Another" → See different "life" question
-- [ ] All 4 categories work (life, random, deep, experiences)
+- [x] Click "life" → See random life question
+- [x] Click "Get Another" → See different "life" question
+- [x] All 4 categories work (life, random, deep, experiences)
 
 **Checkpoint:** Can browse questions by category.
 

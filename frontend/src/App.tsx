@@ -34,6 +34,7 @@ import LoginPage from './components/auth/LoginPage';
 import CallbackPage from './pages/CallbackPage';
 import DashboardPage from './pages/DashboardPage';
 import QuestionsPage from './pages/QuestionsPage';
+import ConnectionsPage from './pages/ConnectionsPage';
 /**
  * ProtectedRoute Component
  * 
@@ -205,6 +206,17 @@ const AppContent = () => {
           } 
         />
 
+        <Route 
+          path="/connections" 
+          element={
+            <ProtectedRoute>
+              <ConnectionsPage />
+            </ProtectedRoute>
+          } 
+        />
+
+
+
         {/**
          * Catch-all route: 404 Not Found
          * 
@@ -277,3 +289,4 @@ export default App;
  * 3. ProtectedRoute checks auth → Not logged in
  * 4. Redirects to "/login"
  */
+
