@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import apiClient, { clearAuth } from '../api/client';
 import type { User } from '../types';
 
-// Define the context type inline
+// Define the context type
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -10,6 +10,7 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   refreshUser: () => Promise<void>;
+  getAuthToken: () => Promise<string>;  // ← Added this!
 }
 
 // Create context
@@ -71,6 +72,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
     window.location.href = '/login';
   };
+
+  // Get auth token function (NEW!)
+  const getAuthToken = async (): Promise<string> => {
+    const token = localStorage.getItem('idToken');
+    
+    if (!token) {
+      throw new Error('No authentication token found. Please log in.');
+    }
+    
+    return token;
+  };
   
   const isAuthenticated = user !== null;
   
@@ -80,7 +92,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     login,
     logout,
     isAuthenticated,
-    refreshUser: initAuth
+    refreshUser: initAuth,
+    getAuthToken  // ← Added this!
   };
   
   return (

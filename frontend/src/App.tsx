@@ -33,6 +33,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './components/auth/LoginPage';
 import CallbackPage from './pages/CallbackPage';
 import DashboardPage from './pages/DashboardPage';
+import QuestionsPage from './pages/QuestionsPage';
 /**
  * ProtectedRoute Component
  * 
@@ -195,6 +196,15 @@ const AppContent = () => {
           }
         />
         
+        <Route 
+          path="/questions" 
+          element={
+            <ProtectedRoute>
+              <QuestionsPage />
+            </ProtectedRoute>
+          } 
+        />
+
         {/**
          * Catch-all route: 404 Not Found
          * 
