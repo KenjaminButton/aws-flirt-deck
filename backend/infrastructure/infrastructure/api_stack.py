@@ -98,7 +98,7 @@ class ApiStack(Stack):
             # Enable CORS for frontend requests
             # Allows localhost and CloudFront to call this API
             default_cors_preflight_options=apigw.CorsOptions(
-                allow_origins=["http://localhost:5173"],  # Add CloudFront later
+                allow_origins=["http://localhost:5173"],  # Vite dev server
                 allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
                 allow_headers=[
                     "Content-Type",
@@ -121,13 +121,14 @@ class ApiStack(Stack):
             identity_source="method.request.header.Authorization",
         )
 
+        # ==================== /auth ENDPOINTS ====================
         # Create /auth resource and /auth/me endpoint
         auth_resource = self.api.root.add_resource("auth")
 
         # Create GET /auth/me Lambda function
         get_me_lambda = self.create_lambda_function(
             function_id="GetMeFunction",
-            handler_path="lambda_functions/auth",
+            handler_path="auth",
             handler_file="get_me",
             description="Get current user profile",
         )
@@ -137,6 +138,27 @@ class ApiStack(Stack):
         auth_resource.add_resource("me").add_method(
             "GET",
             apigw.LambdaIntegration(get_me_lambda),
+            authorizer=self.authorizer,
+            authorization_type=apigw.AuthorizationType.COGNITO,
+        )
+
+        # ==================== /questions ENDPOINTS ====================
+        # Create /questions resource and /questions/random endpoint
+        questions_resource = self.api.root.add_resource("questions")
+
+        # Create GET /questions/random Lambda function
+        get_random_lambda = self.create_lambda_function(
+            function_id="GetRandomQuestionFunction",
+            handler_path="questions",
+            handler_file="get_random",
+            description="Get random question by category",
+        )
+
+        # Add GET /questions/random endpoint to API Gateway
+        # Requires Cognito authorization (only authenticated users can get questions)
+        questions_resource.add_resource("random").add_method(
+            "GET",
+            apigw.LambdaIntegration(get_random_lambda),
             authorizer=self.authorizer,
             authorization_type=apigw.AuthorizationType.COGNITO,
         )
@@ -157,46 +179,57 @@ class ApiStack(Stack):
         """
         Helper method to create Lambda functions with consistent configuration
 
+        NOW PACKAGES ENTIRE lambda_functions/ FOLDER (includes shared/)
+        
         Args:
             function_id: CDK construct ID for the Lambda
-            handler_path: Path to Lambda code (relative to backend/)
+            handler_path: Path to Lambda module (e.g., "auth" or "questions")
             handler_file: Python file name (without .py)
             description: Human-readable description
             timeout: Function timeout in seconds (default: 30)
 
         Returns:
             Lambda Function construct
+
+        Example:
+            lambda_fn = self.create_lambda_function(
+                function_id="GetQuestionsFunction",
+                handler_path="questions",
+                handler_file="get_random",
+                description="Get random question"
+            )
         """
 
-        # Path to the directory containing both lambda code AND shared utilities
-        # We need to go up to backend/ so Lambda can import from shared/
+        # Path to ENTIRE lambda_functions/ folder
+        # This includes shared/ folder that all Lambdas need
         code_path = os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "..",  # This takes us to backend/ directory
+            os.path.dirname(__file__),  # infrastructure/infrastructure/
+            "..",                        # infrastructure/
+            "..",                        # backend/
+            "lambda_functions"           # lambda_functions/ (includes shared/)
         )
 
         return lambda_.Function(
             self,
             function_id,
             runtime=lambda_.Runtime.PYTHON_3_9,
-            # Handler path is now relative to backend/ directory
-            handler=f"{handler_path.replace('/', '.')}.{handler_file}.handler",
+            # Handler format: module.file.handler
+            # Example: "auth.get_me.handler" or "questions.get_random.handler"
+            handler=f"{handler_path}.{handler_file}.handler",
             code=lambda_.Code.from_asset(
                 code_path,
-                # Exclude unnecessary files to keep package small
+                # Exclude unnecessary files to keep deployment package smaller
                 exclude=[
-                    "infrastructure/*",
-                    ".git/*",
-                    "*.pyc",
-                    "__pycache__/*",
-                    ".pytest_cache/*",
-                    "*.egg-info/*",
-                ],
+                    "**/__pycache__",
+                    "**/*.pyc",
+                    "**/seed_data.py",  # Don't deploy seed scripts
+                    "**/.gitkeep",
+                ]
             ),
             role=self.lambda_role,
             timeout=Duration.seconds(timeout),
             description=description,
+            # Environment variables available to Lambda
             environment={
                 "TABLE_NAME": self.table_name,
                 "USER_POOL_ID": self.user_pool.user_pool_id,
