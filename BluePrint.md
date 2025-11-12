@@ -495,7 +495,7 @@ curl https://YOUR-API-URL/prod/auth/me
 #### Day 13: Create Connection
 
 **Tasks:**
-- [ ] Create Lambda: `lambda_functions/connections/create.py`
+- [x] Create Lambda: `lambda_functions/connections/create.py`
   - Input: `name` (e.g., "Sarah from Hinge")
   - Get user ID from JWT
   - Check if user is free tier:
@@ -507,16 +507,16 @@ curl https://YOUR-API-URL/prod/auth/me
     - SK: `CONNECTION#{connection_id}`
     - name, created_at, etc.
   - Return connection object
-- [ ] Add route: `POST /connections` (requires auth)
-- [ ] Deploy
-- [ ] Create frontend: `src/components/connections/CreateConnectionModal.tsx`
+- [x] Add route: `POST /connections` (requires auth)
+- [x] Deploy
+- [x] Create frontend: `src/components/connections/CreateConnectionModal.tsx`
   - Input field for name
   - "Create" button
   - Show error if paywall hit
 
 **Verification:**
-- [ ] Create 1st connection: "Sarah" → Success
-- [ ] Try to create 2nd connection → Error: "Upgrade to Premium"
+- [x] Create 1st connection: "Sarah" → Success
+- [x] Try to create 2nd connection → Error: "Upgrade to Premium"
 
 **⚠️ Trouble Spot:** Make sure free tier check happens BEFORE creating connection.
 
@@ -553,14 +553,14 @@ curl https://YOUR-API-URL/prod/auth/me
 #### Day 15: Connection Detail Page
 
 **Tasks:**
-- [ ] Create `src/pages/ConnectionDetailPage.tsx`
+- [x] Create `src/pages/ConnectionDetailPage.tsx`
   - Shows connection name
   - Placeholder: "Questions used with Sarah: 0"
   - Will add actual usage in next phase
 
 **Verification:**
-- [ ] Click on connection → See detail page
-- [ ] Can navigate back to list
+- [x] Click on connection → See detail page
+- [x] Can navigate back to list (with the use of NavBar)
 
 **Checkpoint:** Connection management fully working.
 

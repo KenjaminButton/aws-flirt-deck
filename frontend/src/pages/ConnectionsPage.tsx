@@ -1,5 +1,5 @@
 /**
- * Connections Page Component
+ * Connections Page Component (UPDATED FOR DAY 15)
  * 
  * Main page for managing conversation partners (connections).
  * Shows list of connections and allows creating new ones.
@@ -7,12 +7,15 @@
  * Features:
  * - List all connections
  * - Create new connection (with free tier limit)
- * - Click connection to view details (future)
+ * - Click connection card to view details ✨ NEW!
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // ✨ NEW IMPORT
 import { useAuth } from '../context/AuthContext';
 import CreateConnectionModal from '../components/connections/CreateConnectionModal';
+
+
 
 interface Connection {
   id: string;
@@ -21,13 +24,16 @@ interface Connection {
 }
 
 const ConnectionsPage: React.FC = () => {
+  
   const { getAuthToken } = useAuth();
+  const navigate = useNavigate(); // ✨ NEW: Add navigation hook
   
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  
 
   // Fetch connections on mount
   useEffect(() => {
@@ -68,6 +74,12 @@ const ConnectionsPage: React.FC = () => {
   const handleConnectionCreated = () => {
     // Refresh the list after creating a new connection
     fetchConnections();
+  };
+
+  // ✨ NEW: Handle clicking on a connection card
+  const handleCardClick = (connectionId: string) => {
+    // Navigate to the detail page for this connection
+    navigate(`/connections/${connectionId}`);
   };
 
   const handleDelete = async (connectionId: string, connectionName: string) => {
@@ -174,7 +186,10 @@ const ConnectionsPage: React.FC = () => {
             {connections.map((connection) => (
               <div
                 key={connection.id}
-                className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer border-2 border-transparent hover:border-purple-200"
+                // ✨ NEW: Add onClick handler to make card clickable
+                onClick={() => handleCardClick(connection.id)}
+                // ✨ NEW: Enhanced hover effects for better UX
+                className="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all cursor-pointer border-2 border-transparent hover:border-purple-300 transform hover:-translate-y-1"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -197,6 +212,8 @@ const ConnectionsPage: React.FC = () => {
                   {/* Delete Button */}
                   <button
                     onClick={(e) => {
+                      // ✨ CRITICAL: Stop event from bubbling to card
+                      // This prevents navigating when clicking delete
                       e.stopPropagation();
                       handleDelete(connection.id, connection.name);
                     }}
@@ -211,6 +228,13 @@ const ConnectionsPage: React.FC = () => {
                 <div className="mt-4 flex gap-4 text-sm text-gray-600">
                   <span>📝 0 questions answered</span>
                   <span>🗒️ 0 notes</span>
+                </div>
+                
+                {/* ✨ NEW: Visual indicator that card is clickable */}
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <span className="text-xs text-purple-600 font-medium">
+                    👉 Click to view details
+                  </span>
                 </div>
               </div>
             ))}

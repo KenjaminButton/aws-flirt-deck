@@ -6,7 +6,9 @@ import CallbackPage from './pages/CallbackPage';
 import DashboardPage from './pages/DashboardPage';
 import QuestionsPage from './pages/QuestionsPage';
 import ConnectionsPage from './pages/ConnectionsPage';
+import ConnectionDetailPage from './pages/ConnectionDetailPage';
 import Navbar from './components/common/Navbar';
+
 
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -66,6 +68,15 @@ const AppContent = () => {
           } 
         />
 
+        <Route 
+          path="/connections/:connectionId" 
+          element={
+            <ProtectedRoute>
+              <Navbar />
+              <ConnectionDetailPage />
+            </ProtectedRoute>
+          } 
+        />
 
         // Add placeholder routes for Settings and Billing
         <Route path="/settings" element={
