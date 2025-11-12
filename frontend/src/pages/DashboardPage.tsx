@@ -1,66 +1,22 @@
 /**
  * Dashboard Page Component
  * 
- * BIG PICTURE:
- * This is the main page users see after logging in.
- * It displays their profile info and provides navigation to main features.
- * 
- * Currently shows:
- * - User name and email
- * - Subscription status
- * - Logout button
- * - Placeholders for Questions and Connections (will be built in later days)
- * 
- * ANALOGY:
- * Think of this as the "home screen" of your app - like the main dashboard
- * in any SaaS app (Gmail, Notion, etc.) where you see your stuff and can
- * navigate to different sections.
+ * Main page users see after logging in.
+ * Shows profile info and provides navigation to main features.
  */
 
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 const DashboardPage = () => {
-  // Get authentication data from context
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   
-  // This shouldn't happen (ProtectedRoute prevents it), but TypeScript needs the check
   if (!user) {
     return null;
   }
   
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header / Navigation Bar */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            {/* Logo / App Name */}
-            <h1 className="text-2xl font-bold text-purple-600">
-              FlirtDeck
-            </h1>
-            
-            {/* User Info & Logout */}
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">
-                  {user.name || 'User'}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {user.email}
-                </p>
-              </div>
-              
-              <button
-                onClick={logout}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition duration-200"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-      
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
@@ -97,12 +53,12 @@ const DashboardPage = () => {
             </div>
             
             {user.subscription_status === 'free' && (
-              <button
+              <Link
+                to="/billing"
                 className="px-6 py-2 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition duration-200"
-                onClick={() => alert('Upgrade feature coming in Phase 5!')}
               >
                 Upgrade to Premium
-              </button>
+              </Link>
             )}
           </div>
         </div>
@@ -110,7 +66,7 @@ const DashboardPage = () => {
         {/* Feature Cards Grid */}
         <div className="grid md:grid-cols-2 gap-6">
           {/* Questions Card */}
-          <div className="bg-white rounded-lg shadow-sm p-6 border-2 border-dashed border-gray-300">
+          <Link to="/questions" className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow border border-gray-200">
             <div className="flex items-center gap-3 mb-4">
               <span className="text-4xl">💬</span>
               <div>
@@ -127,16 +83,13 @@ const DashboardPage = () => {
               Explore questions across life, random, deep, and experiences categories to keep your conversations flowing.
             </p>
             
-            <button
-              className="w-full py-2 px-4 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition duration-200"
-              onClick={() => alert('Questions feature coming on Day 11-12!')}
-            >
-              Coming Soon: Day 11-12
-            </button>
-          </div>
+            <div className="text-purple-600 font-medium">
+              Browse Questions →
+            </div>
+          </Link>
           
           {/* Connections Card */}
-          <div className="bg-white rounded-lg shadow-sm p-6 border-2 border-dashed border-gray-300">
+          <Link to="/connections" className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow border border-gray-200">
             <div className="flex items-center gap-3 mb-4">
               <span className="text-4xl">👥</span>
               <div>
@@ -153,35 +106,47 @@ const DashboardPage = () => {
               Create connections for people you're talking to and track which questions you've used with each person.
             </p>
             
-            <button
-              className="w-full py-2 px-4 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition duration-200"
-              onClick={() => alert('Connections feature coming on Day 13-15!')}
-            >
-              Coming Soon: Day 13-15
-            </button>
-          </div>
+            <div className="text-purple-600 font-medium">
+              Manage Connections →
+            </div>
+          </Link>
         </div>
         
-        {/* Info Box */}
-        <div className="mt-8 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <span className="text-2xl">ℹ️</span>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-900">
-                Development Progress
-              </h3>
-              <div className="mt-2 text-sm text-blue-700">
-                <ul className="list-disc list-inside space-y-1">
-                  <li>✅ Day 8: Frontend setup complete</li>
-                  <li>✅ Day 9: Authentication working</li>
-                  <li>✅ Day 10: Dashboard created</li>
-                  <li>⏳ Day 11-12: Questions system (next)</li>
-                  <li>⏳ Day 13-15: Connections management</li>
-                  <li>⏳ Day 16-18: Stripe billing integration</li>
-                </ul>
+        {/* Quick Stats */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Questions</p>
+                <p className="text-2xl font-bold text-gray-900">12</p>
               </div>
+              <span className="text-3xl">📝</span>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Connections</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {user.subscription_status === 'free' ? '0-1' : '∞'}
+                </p>
+              </div>
+              <span className="text-3xl">👥</span>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Account Type</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {user.subscription_status === 'premium' ? 'Premium' : 'Free'}
+                </p>
+              </div>
+              <span className="text-3xl">
+                {user.subscription_status === 'premium' ? '⭐' : '🆓'}
+              </span>
             </div>
           </div>
         </div>
