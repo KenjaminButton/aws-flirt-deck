@@ -178,6 +178,37 @@ class ApiStack(Stack):
             authorization_type=apigw.AuthorizationType.COGNITO,
         )
 
+        # DELETE /connections/{connection_id} - Delete a connection
+        connection_id_resource = connections_resource.add_resource(
+            "{connection_id}",
+            default_cors_preflight_options=apigw.CorsOptions(
+                allow_origins=["http://localhost:5173"],
+                allow_methods=["DELETE", "OPTIONS"],
+                allow_headers=[
+                    "Content-Type",
+                    "Authorization",
+                    "X-Amz-Date",
+                    "X-Api-Key",
+                    "X-Amz-Security-Token",
+                ],
+                allow_credentials=True,
+            )
+        )
+        
+        delete_connection_lambda = self.create_lambda_function(
+            function_id="DeleteConnectionFunction",
+            handler_path="connections",
+            handler_file="delete",
+            description="Delete a connection",
+        )
+
+        connection_id_resource.add_method(
+            "DELETE",
+            apigw.LambdaIntegration(delete_connection_lambda),
+            authorizer=self.authorizer,
+            authorization_type=apigw.AuthorizationType.COGNITO,
+        )
+
         # Add resource tags
         Tags.of(self).add("Project", "FlirtDeck")
         Tags.of(self).add("Environment", "Production")

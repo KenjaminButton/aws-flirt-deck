@@ -27,6 +27,7 @@ const ConnectionsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Fetch connections on mount
   useEffect(() => {
@@ -67,6 +68,40 @@ const ConnectionsPage: React.FC = () => {
   const handleConnectionCreated = () => {
     // Refresh the list after creating a new connection
     fetchConnections();
+  };
+
+  const handleDelete = async (connectionId: string, connectionName: string) => {
+    if (!confirm(`Delete "${connectionName}"? This cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingId(connectionId);
+
+    try {
+      const token = await getAuthToken();
+      const apiUrl = import.meta.env.VITE_API_URL;
+
+      const response = await fetch(`${apiUrl}/connections/${connectionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete connection');
+      }
+
+      // Refresh the list
+      await fetchConnections();
+      
+    } catch (err) {
+      console.error('Error deleting connection:', err);
+      alert('Failed to delete connection. Please try again.');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -159,9 +194,16 @@ const ConnectionsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Action Button (placeholder for future) */}
-                  <button className="text-gray-400 hover:text-gray-600 text-2xl">
-                    →
+                  {/* Delete Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(connection.id, connection.name);
+                    }}
+                    disabled={deletingId === connection.id}
+                    className="text-red-400 hover:text-red-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {deletingId === connection.id ? '...' : '🗑️ Delete'}
                   </button>
                 </div>
 

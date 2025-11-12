@@ -525,28 +525,28 @@ curl https://YOUR-API-URL/prod/auth/me
 #### Day 14: List & Delete Connections
 
 **Tasks:**
-- [ ] Create Lambda: `lambda_functions/connections/list.py`
+- [x] Create Lambda: `lambda_functions/connections/list.py`
   - Get user ID from JWT
   - Query DynamoDB: all items where PK=`USER#{user_id}` AND SK starts with `CONNECTION#`
   - Return list of connections
-- [ ] Create Lambda: `lambda_functions/connections/delete.py`
+- [x] Create Lambda: `lambda_functions/connections/delete.py`
   - Input: connection_id
   - Verify connection belongs to user
   - Delete from DynamoDB
   - Also delete all usage records for this connection
-- [ ] Add routes:
+- [x] Add routes:
   - `GET /connections`
   - `DELETE /connections/{id}`
-- [ ] Deploy
-- [ ] Create frontend: `src/pages/ConnectionsPage.tsx`
+- [x] Deploy
+- [x] Create frontend: `src/pages/ConnectionsPage.tsx`
   - List all connections
   - "Add Connection" button
   - Delete button per connection
 
 **Verification:**
-- [ ] Can see list of connections
-- [ ] Can delete a connection
-- [ ] After deleting, can create new connection (if was at limit)
+- [x] Can see list of connections
+- [x] Can delete a connection
+- [x] After deleting, can create new connection (if was at limit)
 
 ---
 
