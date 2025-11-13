@@ -102,12 +102,23 @@ export default function ConnectionDetailPage() {
       const token = await getAuthToken();
       const apiUrl = import.meta.env.VITE_API_URL;
       
-      const response = await fetch(`${apiUrl}/questions/random?category=${category}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (!response.ok) throw new Error('Failed to fetch question');
-      
+      const response = await fetch(
+        `${apiUrl}/questions/random?category=${category}&connection_id=${connectionId}`,
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.code === 'ALL_QUESTIONS_USED') {
+          setError(`You've used all questions in the '${category}' category! Try another category.`);
+          setLoadingQuestion(false); 
+          return;
+        }
+        throw new Error('Failed to fetch question');
+      }
+
       const question = await response.json();
       setCurrentQuestion(question);
       setTheirAnswer('');
@@ -331,6 +342,12 @@ export default function ConnectionDetailPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-yellow-800">{error}</p>
         </div>
       )}
 

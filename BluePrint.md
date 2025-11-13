@@ -622,21 +622,21 @@ curl https://YOUR-API-URL/prod/auth/me
 #### Day 18: Edit/Delete Usage
 
 **Tasks:**
-- [ ] Create Lambda: `lambda_functions/usage/update.py`
+- [x] Create Lambda: `lambda_functions/usage/update.py`
   - Input: connection_id, question_id, new answers
   - Update DynamoDB item
-- [ ] Create Lambda: `lambda_functions/usage/delete.py`
+- [x] Create Lambda: `lambda_functions/usage/delete.py`
   - Delete usage record
-- [ ] Add routes:
+- [x] Add routes:
   - `PUT /connections/{id}/usage/{question_id}`
   - `DELETE /connections/{id}/usage/{question_id}`
-- [ ] Deploy
-- [ ] Update frontend: Add edit/delete buttons
+- [x] Deploy
+- [x] Update frontend: Add edit/delete buttons
 
 **Verification:**
-- [ ] Can edit answers
-- [ ] Can delete usage record
-- [ ] Can re-use same question after deleting
+- [x] Can edit answers
+- [x] Can delete usage record
+- [x] Can re-use same question after deleting
 
 **Checkpoint:** Full note-taking workflow works end-to-end.
 
