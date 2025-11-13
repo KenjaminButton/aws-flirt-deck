@@ -21,6 +21,7 @@ interface Connection {
   id: string;
   name: string;
   created_at: string;
+  usage_count?: number; 
 }
 
 const ConnectionsPage: React.FC = () => {
@@ -226,8 +227,7 @@ const ConnectionsPage: React.FC = () => {
 
                 {/* Stats (placeholder for future features) */}
                 <div className="mt-4 flex gap-4 text-sm text-gray-600">
-                  <span>📝 0 questions answered</span>
-                  <span>🗒️ 0 notes</span>
+                  <span>📝 {connection.usage_count || 0} questions answered</span>
                 </div>
                 
                 {/* ✨ NEW: Visual indicator that card is clickable */}

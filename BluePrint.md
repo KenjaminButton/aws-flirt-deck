@@ -571,7 +571,7 @@ curl https://YOUR-API-URL/prod/auth/me
 #### Day 16: Mark Question as Used
 
 **Tasks:**
-- [ ] Create Lambda: `lambda_functions/usage/create.py`
+- [x] Create Lambda: `lambda_functions/usage/create.py`
   - Input: `connection_id`, `question_id`, `their_answer`, `my_answer`
   - Get user ID from JWT
   - Write to DynamoDB:
@@ -580,42 +580,42 @@ curl https://YOUR-API-URL/prod/auth/me
     - GSI1PK: `CONNECTION#{connection_id}`
     - GSI1SK: `USAGE#{timestamp}`
   - Return usage object
-- [ ] Add route: `POST /connections/{id}/usage`
-- [ ] Deploy
-- [ ] Update QuestionsPage:
+- [x] Add route: `POST /connections/{id}/usage`
+- [x] Deploy
+- [x] Update QuestionsPage:
   - After showing random question, add "Use This Question" button
   - Opens modal: Select connection + 2 text areas (their answer, my answer)
   - Submit → Create usage record
   - Success message
 
 **Verification:**
-- [ ] Get random question
-- [ ] Click "Use This Question"
-- [ ] Select "Sarah"
-- [ ] Enter both answers
-- [ ] Submit → Success
+- [x] Get random question
+- [x] Click "Use This Question"
+- [x] Select "Sarah"
+- [x] Enter both answers
+- [x] Submit → Success
 
 ---
 
 #### Day 17: View Usage History
 
 **Tasks:**
-- [ ] Create Lambda: `lambda_functions/usage/list.py`
+- [x] Create Lambda: `lambda_functions/usage/list.py`
   - Input: connection_id
   - Query DynamoDB using GSI: `GSI1PK=CONNECTION#{connection_id}`
   - Return list of usage records with question text
-- [ ] Add route: `GET /connections/{id}/usage`
-- [ ] Deploy
-- [ ] Update ConnectionDetailPage:
+- [x] Add route: `GET /connections/{id}/usage`
+- [x] Deploy
+- [x] Update ConnectionDetailPage:
   - Fetch usage history
   - Display list of questions used
   - Show their answer and your answer
   - Show date asked
 
 **Verification:**
-- [ ] Go to Sarah's detail page
-- [ ] See list of questions you've used with her
-- [ ] See both answers for each
+- [x] Go to Sarah's detail page
+- [x] See list of questions you've used with her
+- [x] See both answers for each
 
 ---
 

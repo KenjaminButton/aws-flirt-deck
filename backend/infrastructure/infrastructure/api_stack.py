@@ -209,6 +209,89 @@ class ApiStack(Stack):
             authorization_type=apigw.AuthorizationType.COGNITO,
         )
 
+        # POST /connections/{connection_id}/usage
+        usage_resource = connection_id_resource.add_resource("usage")
+        
+        create_usage_lambda = self.create_lambda_function(
+            function_id="CreateUsageFunction",
+            handler_path="usage",
+            handler_file="create",
+            description="Record question usage with connection",
+        )
+
+        usage_resource.add_method(
+            "POST",
+            apigw.LambdaIntegration(create_usage_lambda),
+            authorizer=self.authorizer,
+            authorization_type=apigw.AuthorizationType.COGNITO,
+        )
+
+
+
+
+        # GET /connections/{connection_id}/usage - List usage records
+        list_usage_lambda = self.create_lambda_function(
+            function_id="ListUsageFunction",
+            handler_path="usage",
+            handler_file="list",
+            description="List all usage records for connection",
+        )
+
+        usage_resource.add_method(
+            "GET",
+            apigw.LambdaIntegration(list_usage_lambda),
+            authorizer=self.authorizer,
+            authorization_type=apigw.AuthorizationType.COGNITO,
+        )
+
+        # /connections/{connection_id}/usage/{usage_id} resource
+        # Add explicit CORS for PUT and DELETE on usage records
+        usage_id_resource = usage_resource.add_resource(
+            "{usage_id}",
+            default_cors_preflight_options=apigw.CorsOptions(
+                allow_origins=["http://localhost:5173"],
+                allow_methods=["GET", "PUT", "DELETE", "OPTIONS"],
+                allow_headers=[
+                    "Content-Type",
+                    "Authorization",
+                    "X-Amz-Date",
+                    "X-Api-Key",
+                    "X-Amz-Security-Token",
+                ],
+                allow_credentials=True,
+            )
+        )
+        
+        # PUT /connections/{connection_id}/usage/{usage_id} - Update usage
+        update_usage_lambda = self.create_lambda_function(
+            function_id="UpdateUsageFunction",
+            handler_path="usage",
+            handler_file="update",
+            description="Update usage record answers",
+        )
+
+        usage_id_resource.add_method(
+            "PUT",
+            apigw.LambdaIntegration(update_usage_lambda),
+            authorizer=self.authorizer,
+            authorization_type=apigw.AuthorizationType.COGNITO,
+        )
+        
+        # DELETE /connections/{connection_id}/usage/{usage_id} - Delete usage
+        delete_usage_lambda = self.create_lambda_function(
+            function_id="DeleteUsageFunction",
+            handler_path="usage",
+            handler_file="delete",
+            description="Delete usage record",
+        )
+
+        usage_id_resource.add_method(
+            "DELETE",
+            apigw.LambdaIntegration(delete_usage_lambda),
+            authorizer=self.authorizer,
+            authorization_type=apigw.AuthorizationType.COGNITO,
+        )
+
         # Add resource tags
         Tags.of(self).add("Project", "FlirtDeck")
         Tags.of(self).add("Environment", "Production")

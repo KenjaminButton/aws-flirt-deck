@@ -69,6 +69,13 @@ const QuestionsPage: React.FC = () => {
           })}
         </div>
 
+        {/* ADD HINT HERE */}
+        <div className="text-center mb-8">
+          <p className="text-sm text-gray-500">
+            💡 Select a connection to start recording answers
+          </p>
+        </div>
+
         {currentQuestion && !loading && (
           <div className="bg-white rounded-2xl shadow-2xl p-8 mb-6">
             <div className="flex items-center justify-between mb-6">
@@ -78,8 +85,13 @@ const QuestionsPage: React.FC = () => {
               <span className="text-sm text-gray-400">#{currentQuestion.id}</span>
             </div>
             <p className="text-2xl text-gray-800 leading-relaxed mb-8">{currentQuestion.text}</p>
-            <button onClick={() => fetchRandomQuestion(selectedCategory!)} disabled={loading}
-              className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-semibold py-4 px-6 rounded-xl transform transition-all hover:scale-105 shadow-lg">
+            
+            {/* Single Button - Get Another */}
+            <button 
+              onClick={() => fetchRandomQuestion(selectedCategory!)} 
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-semibold py-4 px-6 rounded-xl transform transition-all hover:scale-105 shadow-lg"
+            >
               🔄 Get Another {CATEGORIES[selectedCategory!].name} Question
             </button>
           </div>
