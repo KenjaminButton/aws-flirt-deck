@@ -79,6 +79,7 @@ def handler(event, context):
             'connection_id': connection_id,
             'question_id': question_id,
             'question_text': body.get('question_text', ''),
+            'category': body.get('category', 'unknown'), 
             'their_answer': their_answer,
             'my_answer': my_answer,
             'created_at': timestamp,
@@ -95,6 +96,7 @@ def handler(event, context):
             'usage_id': usage_id,
             'connection_id': connection_id,
             'question_id': question_id,
+            'category': body.get('category', 'unknown'),
             'their_answer': their_answer,
             'my_answer': my_answer,
             'created_at': timestamp

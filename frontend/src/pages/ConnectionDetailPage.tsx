@@ -17,7 +17,8 @@ interface Question {
 interface UsageRecord {
   usage_id: string;
   question_id: string;
-  question_text: string; 
+  question_text: string;
+  category?: string;
   their_answer: string;
   my_answer: string;
   created_at: string;
@@ -149,6 +150,7 @@ export default function ConnectionDetailPage() {
         body: JSON.stringify({
           question_id: currentQuestion.id,
           question_text: currentQuestion.text,
+          category: currentQuestion.category, 
           their_answer: theirAnswer,
           my_answer: myAnswer
         })
@@ -364,11 +366,20 @@ export default function ConnectionDetailPage() {
         ) : (
           <div className="space-y-4">
             {usageHistory.map((record) => (
+
               <div key={record.usage_id} className="bg-white rounded-lg shadow p-6">
                 <div className="flex justify-between items-start mb-3">
-                  <span className="text-sm text-gray-500">
-                    {new Date(record.created_at).toLocaleDateString()}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {record.category && (
+                      <span className={`${CATEGORIES[record.category as Category]?.color.replace('hover:bg', 'bg').split(' ')[0]} text-white px-2 py-1 rounded text-xs font-medium`}>
+                        {CATEGORIES[record.category as Category]?.emoji} {CATEGORIES[record.category as Category]?.name || record.category}
+                      </span>
+                    )}
+                    <span className="text-sm text-gray-500">
+                      {new Date(record.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(record)}

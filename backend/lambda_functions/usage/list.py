@@ -42,6 +42,7 @@ def clean_usage_for_response(usage: Dict[str, Any]) -> Dict[str, Any]:
         'connection_id': usage['connection_id'],
         'question_id': usage['question_id'],
         'question_text': usage.get('question_text', ''),
+        'category': usage.get('category', 'unknown'), 
         'their_answer': usage.get('their_answer', ''),
         'my_answer': usage.get('my_answer', ''),
         'created_at': usage['created_at']
