@@ -419,7 +419,7 @@ export default function ConnectionDetailPage() {
                       <textarea
                         value={editTheirAnswer}
                         onChange={(e) => setEditTheirAnswer(e.target.value.slice(0, 1000))}
-                        rows={2}
+                        rows={3}
                         maxLength={1000}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
                       />
@@ -433,7 +433,7 @@ export default function ConnectionDetailPage() {
                       <textarea
                         value={editMyAnswer}
                         onChange={(e) => setEditMyAnswer(e.target.value.slice(0, 1000))}
-                        rows={2}
+                        rows={3}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
                       />
                       <div className={`text-right text-sm mt-1 ${editMyAnswer.length >= 1000 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
