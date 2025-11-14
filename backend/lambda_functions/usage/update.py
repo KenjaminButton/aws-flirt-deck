@@ -37,6 +37,13 @@ def handler(event, context):
         their_answer = body.get('their_answer', '')
         my_answer = body.get('my_answer', '')
         
+
+        # Validate answer lengths
+        if len(their_answer) > 1000:
+            return error_response("Their answer exceeds 1000 characters", 400, "ANSWER_TOO_LONG")
+        if len(my_answer) > 1000:
+            return error_response("My answer exceeds 1000 characters", 400, "ANSWER_TOO_LONG")
+
         # Verify connection belongs to user
         connection = table.get_item(
             Key={

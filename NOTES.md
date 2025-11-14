@@ -1,4 +1,4 @@
-le1. Add a maximum input of text so it won'd toverload the database.
+1. Add a maximum input of text so it won'd toverload the database.
 
 2. Changt the page title (💕FlirtDeck) and the favicon to 💕?
 
