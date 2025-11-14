@@ -132,50 +132,27 @@ apiClient.interceptors.request.use(
  * 
  * So we automatically clear localStorage and redirect to login.
  */
-apiClient.interceptors.response.use(
-  // Success case: just return the response unchanged
-  (response) => {
-    return response;
-  },
-  
-  // Error case: handle different error types
-  (error: AxiosError<ApiError>) => {
-    // 401 Unauthorized - Token expired or invalid
-    if (error.response?.status === 401) {
-      console.log('Authentication failed - redirecting to login');
-      
-      // Clear all auth data from localStorage
-      // This is important - don't keep invalid tokens around
-      localStorage.removeItem('idToken');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      
-      // Redirect to login page
-      // This forces the user to re-authenticate with Google
+apiClient.interceptors.request.use(
+  (config) => {
+    // Get the ID token from localStorage
+    const token = localStorage.getItem('idToken');
+    
+    // If no token exists, redirect to login immediately
+    // Don't even make the request
+    if (!token) {
+      console.log('No token found - redirecting to login');
+      localStorage.clear(); // Clear everything
       window.location.href = '/login';
+      // Return a rejected promise to cancel the request
+      return Promise.reject(new Error('No authentication token'));
     }
     
-    // 403 Forbidden - User doesn't have permission
-    // Example: Free user trying to create 2nd connection
-    if (error.response?.status === 403) {
-      console.log('Access forbidden:', error.response.data);
-      // Could show a "Upgrade to Premium" modal here
-      // For now, just let the error bubble up to the component
-    }
+    // Add token to request
+    config.headers.Authorization = `Bearer ${token}`;
     
-    // 500 Internal Server Error - Backend is broken
-    if (error.response?.status === 500) {
-      console.error('Server error:', error.response.data);
-      // Could show a "Something went wrong, try again later" message
-    }
-    
-    // Network error - User is offline or API is unreachable
-    if (!error.response) {
-      console.error('Network error - check your connection');
-    }
-    
-    // Return the error so the calling code can handle it
-    // This allows components to do custom error handling if needed
+    return config;
+  },
+  (error) => {
     return Promise.reject(error);
   }
 );

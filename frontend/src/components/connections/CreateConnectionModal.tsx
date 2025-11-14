@@ -7,6 +7,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import apiClient from '../../api/client';
 
 interface CreateConnectionModalProps {
   isOpen: boolean;
@@ -19,7 +20,6 @@ const CreateConnectionModal: React.FC<CreateConnectionModalProps> = ({
   onClose,
   onSuccess
 }) => {
-  const { getAuthToken } = useAuth();
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,39 +38,23 @@ const CreateConnectionModal: React.FC<CreateConnectionModalProps> = ({
     setIsPaywallError(false);
 
     try {
-      const token = await getAuthToken();
-      const apiUrl = import.meta.env.VITE_API_URL;
-
-      const response = await fetch(`${apiUrl}/connections`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name: name.trim() })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Check if it's a paywall error
-        if (response.status === 403 && data.code === 'FREE_TIER_LIMIT') {
-          setIsPaywallError(true);
-          setError(data.error);
-        } else {
-          setError(data.error || 'Failed to create connection');
-        }
-        return;
-      }
+      await apiClient.post('/connections', { name: name.trim() });
 
       // Success!
       setName('');
       onSuccess();
       onClose();
       
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating connection:', err);
-      setError('Something went wrong. Please try again.');
+      
+      // Check if it's a paywall error
+      if (err.response?.status === 403 && err.response?.data?.code === 'FREE_TIER_LIMIT') {
+        setIsPaywallError(true);
+        setError(err.response.data.error);
+      } else {
+        setError(err.response?.data?.error || 'Failed to create connection');
+      }
     } finally {
       setLoading(false);
     }

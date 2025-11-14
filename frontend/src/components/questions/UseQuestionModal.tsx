@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import apiClient from '../../api/client';
 
 interface Connection {
   id: string;
@@ -28,8 +29,6 @@ const UseQuestionModal: React.FC<UseQuestionModalProps> = ({
   questionId,
   questionText
 }) => {
-  const { getAuthToken } = useAuth();
-  
   const [connections, setConnections] = useState<Connection[]>([]);
   const [selectedConnectionId, setSelectedConnectionId] = useState('');
   const [theirAnswer, setTheirAnswer] = useState('');
@@ -46,19 +45,8 @@ const UseQuestionModal: React.FC<UseQuestionModalProps> = ({
 
   const fetchConnections = async () => {
     try {
-      const token = await getAuthToken();
-      const apiUrl = import.meta.env.VITE_API_URL;
-      
-      const response = await fetch(`${apiUrl}/connections`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch connections');
-      
-      const data = await response.json();
-      setConnections(data);
+      const response = await apiClient.get('/connections');
+      setConnections(response.data);
     } catch (err) {
       setError('Failed to load connections');
     }
@@ -76,26 +64,11 @@ const UseQuestionModal: React.FC<UseQuestionModalProps> = ({
     setError(null);
 
     try {
-      const token = await getAuthToken();
-      const apiUrl = import.meta.env.VITE_API_URL;
-
-      const response = await fetch(
-        `${apiUrl}/connections/${selectedConnectionId}/usage`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            question_id: questionId,
-            their_answer: theirAnswer,
-            my_answer: myAnswer
-          })
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to record usage');
+      await apiClient.post(`/connections/${selectedConnectionId}/usage`, {
+        question_id: questionId,
+        their_answer: theirAnswer,
+        my_answer: myAnswer
+      });
 
       // Success!
       onSuccess();

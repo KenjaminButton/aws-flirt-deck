@@ -674,6 +674,81 @@ curl https://YOUR-API-URL/prod/auth/me
 
 ---
 
+#### Day 18.75: API Client Migration & Settings/Billing Pages ✅
+
+**Tasks Completed:**
+
+**Part 1: API Client Migration (Auto-logout on token expiry)**
+- [x] **Migrated all fetch() calls to apiClient**: Converted 8 files to use centralized Axios client
+  - `ConnectionDetailPage.tsx` - 5 API calls converted
+  - `ConnectionsPage.tsx` - 2 API calls converted
+  - `QuestionsPage.tsx` - 1 API call converted
+  - `CreateConnectionModal.tsx` - 1 API call converted
+  - `UseQuestionModal.tsx` - 2 API calls converted
+  - `DashboardPage.tsx` - No changes (no API calls)
+  - `CallbackPage.tsx` - Already using apiClient
+  - `AuthContext.tsx` - Already using apiClient
+
+- [x] **Auto-logout implementation**: Users automatically redirected to login when:
+  - Token is missing before making API request (request interceptor)
+  - Token expires and API returns 401 (response interceptor)
+  - Prevents CORS errors from invalid tokens
+
+- [x] **Input validation**: Added character limits and counters
+  - Answer text fields limited to 1000 characters (frontend + backend)
+  - Visual character counter with red warning at limit
+  - Backend validation in `create.py` and `update.py`
+
+**Part 2: Settings & Billing Pages (MVP)**
+- [x] **Settings Page**: Created account information page
+  - Display user name, email, user ID (read-only)
+  - Member since date
+  - Support message for updating Google account info
+  - Route: `/settings`
+
+- [x] **Billing Page**: Created subscription management page (Phase 6 ready)
+  - Current plan display (Free/Premium)
+  - Plan comparison cards with features
+  - "Upgrade to Premium" button (placeholder for Stripe)
+  - "Cancel Subscription" button (placeholder for Stripe)
+  - Route: `/billing`
+
+- [x] **Footer Component**: Added footer with contact information
+  - Contact email: support@flirtdeck.com
+  - Copyright notice
+  - Displays on all protected pages
+
+**Files Created:**
+- `frontend/src/pages/SettingsPage.tsx`
+- `frontend/src/pages/BillingPage.tsx`
+- `frontend/src/components/common/Footer.tsx`
+
+**Files Modified:**
+- Backend: `usage/create.py`, `usage/update.py` (validation)
+- Frontend: All page components, modals, `client.ts`, `App.tsx` (routes)
+
+**Technical Improvements:**
+- Consistent error handling via Axios interceptors
+- Automatic token management (no manual getAuthToken calls)
+- CORS error prevention by checking token before requests
+- Better UX with character limits and visual feedback
+
+**Verification:**
+- [x] Token expiry triggers auto-logout and redirect
+- [x] All API calls work with apiClient
+- [x] Settings page displays user information
+- [x] Billing page shows plan comparison
+- [x] Footer appears on all pages with contact email
+- [x] Character limits enforced on create and edit
+- [x] Character counter shows warning at 1000 chars
+
+**Ready for Phase 6:**
+- Settings and Billing pages have placeholders for Stripe integration
+- API client architecture supports future billing endpoints
+- User subscription status already tracked in database
+
+---
+
 ### **PHASE 6: Stripe Billing** (Days 19-21) 🔴
 
 #### Day 19: Stripe Setup

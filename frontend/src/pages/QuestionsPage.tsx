@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import apiClient from '../api/client';
 
 interface Question {
   id: string;
@@ -17,7 +18,6 @@ const CATEGORIES: Record<Category, { name: string; color: string; emoji: string 
 };
 
 const QuestionsPage: React.FC = () => {
-  const { getAuthToken } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,14 +27,8 @@ const QuestionsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const token = await getAuthToken();
-      const apiUrl = import.meta.env.VITE_API_URL;
-      const response = await fetch(`${apiUrl}/questions/random?category=${category}`, {
-        method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-      });
-      if (!response.ok) throw new Error('Failed to fetch question');
-      const question: Question = await response.json();
+      const response = await apiClient.get(`/questions/random?category=${category}`);
+      const question: Question = response.data;
       setCurrentQuestion(question);
       setSelectedCategory(category);
     } catch (err) {

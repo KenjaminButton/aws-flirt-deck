@@ -1,18 +1,7 @@
-/**
- * Connections Page Component (UPDATED FOR DAY 15)
- * 
- * Main page for managing conversation partners (connections).
- * Shows list of connections and allows creating new ones.
- * 
- * Features:
- * - List all connections
- * - Create new connection (with free tier limit)
- * - Click connection card to view details ✨ NEW!
- */
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // ✨ NEW IMPORT
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import apiClient from '../api/client'
 import CreateConnectionModal from '../components/connections/CreateConnectionModal';
 
 
@@ -25,9 +14,7 @@ interface Connection {
 }
 
 const ConnectionsPage: React.FC = () => {
-  
-  const { getAuthToken } = useAuth();
-  const navigate = useNavigate(); // ✨ NEW: Add navigation hook
+  const navigate = useNavigate(); 
   
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,24 +33,8 @@ const ConnectionsPage: React.FC = () => {
     setError(null);
 
     try {
-      const token = await getAuthToken();
-      const apiUrl = import.meta.env.VITE_API_URL;
-
-      const response = await fetch(`${apiUrl}/connections`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch connections');
-      }
-
-      const data = await response.json();
-      setConnections(data);
-      
+      const response = await apiClient.get('/connections');
+      setConnections(response.data);
     } catch (err) {
       console.error('Error fetching connections:', err);
       setError('Failed to load connections');
@@ -91,24 +62,10 @@ const ConnectionsPage: React.FC = () => {
     setDeletingId(connectionId);
 
     try {
-      const token = await getAuthToken();
-      const apiUrl = import.meta.env.VITE_API_URL;
-
-      const response = await fetch(`${apiUrl}/connections/${connectionId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete connection');
-      }
-
+      await apiClient.delete(`/connections/${connectionId}`);
+      
       // Refresh the list
       await fetchConnections();
-      
     } catch (err) {
       console.error('Error deleting connection:', err);
       alert('Failed to delete connection. Please try again.');

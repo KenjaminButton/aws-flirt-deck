@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import apiClient from '../api/client';
 
 interface Connection {
   id: string;
@@ -63,31 +64,19 @@ export default function ConnectionDetailPage() {
 
   const fetchData = async () => {
     try {
-      const token = await getAuthToken();
-      const apiUrl = import.meta.env.VITE_API_URL;
-
       // Fetch connection
-      const connectionsResponse = await fetch(`${apiUrl}/connections`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!connectionsResponse.ok) throw new Error('Failed to fetch');
-      
-      const connections = await connectionsResponse.json();
+      const connectionsResponse = await apiClient.get('/connections');
+      const connections = connectionsResponse.data;
       const found = connections.find((c: Connection) => c.id === connectionId);
       
       if (!found) {
         setError('Connection not found');
       } else {
-        setConnection(found);
-        
-        // Fetch usage history
-        const usageResponse = await fetch(`${apiUrl}/connections/${connectionId}/usage`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (usageResponse.ok) {
-          const usage = await usageResponse.json();
-          setUsageHistory(usage);
-        }
+        setConnection(found);  
+      // Fetch usage history
+      const usageResponse = await apiClient.get(`/connections/${connectionId}/usage`);
+      const usage = usageResponse.data;
+      setUsageHistory(usage);
       }
     } catch (err) {
       setError('Failed to load connection');
@@ -100,32 +89,18 @@ export default function ConnectionDetailPage() {
     setLoadingQuestion(true);
     setError(null);
     try {
-      const token = await getAuthToken();
-      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await apiClient.get(`/questions/random?category=${category}&connection_id=${connectionId}`);
+      const question = response.data;
       
-      const response = await fetch(
-        `${apiUrl}/questions/random?category=${category}&connection_id=${connectionId}`,
-        {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        if (errorData.code === 'ALL_QUESTIONS_USED') {
-          setError(`You've used all questions in the '${category}' category! Try another category.`);
-          setLoadingQuestion(false); 
-          return;
-        }
-        throw new Error('Failed to fetch question');
-      }
-
-      const question = await response.json();
       setCurrentQuestion(question);
       setTheirAnswer('');
       setMyAnswer('');
-    } catch (err) {
-      setError('Failed to load question');
+    } catch (error: any) {
+      if (error.response?.data?.code === 'ALL_QUESTIONS_USED') {
+        setError(`You've used all questions in the '${category}' category! Try another category.`);
+      } else {
+        setError('Failed to load question');
+      }
     } finally {
       setLoadingQuestion(false);
     }
@@ -138,25 +113,13 @@ export default function ConnectionDetailPage() {
     setError(null);
     
     try {
-      const token = await getAuthToken();
-      const apiUrl = import.meta.env.VITE_API_URL;
-      
-      const response = await fetch(`${apiUrl}/connections/${connectionId}/usage`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          question_id: currentQuestion.id,
-          question_text: currentQuestion.text,
-          category: currentQuestion.category, 
-          their_answer: theirAnswer,
-          my_answer: myAnswer
-        })
+      await apiClient.post(`/connections/${connectionId}/usage`, {
+        question_id: currentQuestion.id,
+        question_text: currentQuestion.text,
+        category: currentQuestion.category,
+        their_answer: theirAnswer,
+        my_answer: myAnswer
       });
-      
-      if (!response.ok) throw new Error('Failed to save');
       
       // Refresh
       await fetchData();
@@ -180,22 +143,10 @@ export default function ConnectionDetailPage() {
 
   const handleSaveEdit = async (usageId: string) => {
     try {
-      const token = await getAuthToken();
-      const apiUrl = import.meta.env.VITE_API_URL;
-      
-      const response = await fetch(`${apiUrl}/connections/${connectionId}/usage/${usageId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          their_answer: editTheirAnswer,
-          my_answer: editMyAnswer
-        })
+      await apiClient.put(`/connections/${connectionId}/usage/${usageId}`, {
+        their_answer: editTheirAnswer,
+        my_answer: editMyAnswer
       });
-      
-      if (!response.ok) throw new Error('Failed to update');
       
       // Refresh
       await fetchData();
@@ -209,17 +160,7 @@ export default function ConnectionDetailPage() {
     if (!confirm('Delete this conversation record?')) return;
     
     try {
-      const token = await getAuthToken();
-      const apiUrl = import.meta.env.VITE_API_URL;
-      
-      const response = await fetch(`${apiUrl}/connections/${connectionId}/usage/${usageId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete');
+      await apiClient.delete(`/connections/${connectionId}/usage/${usageId}`);
       
       // Refresh
       await fetchData();

@@ -7,7 +7,10 @@ import DashboardPage from './pages/DashboardPage';
 import QuestionsPage from './pages/QuestionsPage';
 import ConnectionsPage from './pages/ConnectionsPage';
 import ConnectionDetailPage from './pages/ConnectionDetailPage';
+import SettingsPage from './pages/SettingsPage';
+import BillingPage from './pages/BillingPage'; 
 import Navbar from './components/common/Navbar';
+import Footer from './components/common/Footer'; 
 
 
 
@@ -44,6 +47,7 @@ const AppContent = () => {
             <ProtectedRoute>
               <Navbar />
               <DashboardPage />
+              <Footer />  
             </ProtectedRoute>
           }
         />
@@ -54,6 +58,7 @@ const AppContent = () => {
             <ProtectedRoute>
               <Navbar />
               <QuestionsPage />
+              <Footer />
             </ProtectedRoute>
           } 
         />
@@ -64,6 +69,7 @@ const AppContent = () => {
             <ProtectedRoute>
               <Navbar />
               <ConnectionsPage />
+              <Footer />
             </ProtectedRoute>
           } 
         />
@@ -74,32 +80,24 @@ const AppContent = () => {
             <ProtectedRoute>
               <Navbar />
               <ConnectionDetailPage />
+              <Footer />
             </ProtectedRoute>
           } 
         />
 
-        // Add placeholder routes for Settings and Billing
         <Route path="/settings" element={
           <ProtectedRoute>
-            <>
-              <Navbar />
-              <div className="p-8 text-center">
-                <h1 className="text-3xl font-bold">⚙️ Settings</h1>
-                <p className="text-gray-600 mt-4">Coming soon!</p>
-              </div>
-            </>
+            <Navbar />
+            <SettingsPage />
+            <Footer />
           </ProtectedRoute>
         } />
 
         <Route path="/billing" element={
           <ProtectedRoute>
-            <>
-              <Navbar />
-              <div className="p-8 text-center">
-                <h1 className="text-3xl font-bold">💳 Billing</h1>
-                <p className="text-gray-600 mt-4">Coming soon!</p>
-              </div>
-            </>
+            <Navbar />
+            <BillingPage />
+            <Footer />
           </ProtectedRoute>
         } />
 
