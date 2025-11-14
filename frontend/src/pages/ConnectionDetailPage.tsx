@@ -439,7 +439,7 @@ export default function ConnectionDetailPage() {
                   </div>
                 ) : (
                   // View Mode
-                  <div className="space-y-3">
+                  <div className="space-y-3 pl-3">
                     <div>
                       <p className="text-sm font-medium text-gray-700">They said:</p>
                       <p className="text-gray-600 mt-1">{record.their_answer || '(no answer recorded)'}</p>

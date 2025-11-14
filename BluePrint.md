@@ -642,6 +642,38 @@ curl https://YOUR-API-URL/prod/auth/me
 
 ---
 
+#### Day 18.5: Polish & Quality of Life Improvements ✅
+
+**Tasks Completed:**
+- [x] **Navigation Bar**: Added navbar component for consistent navigation across pages
+  - Links to Connections, Questions, Profile
+  - Displays current page
+  - Logout button
+- [x] **Prevent Duplicate Questions**: Modified `get_random.py` to filter out already-used questions
+  - Backend accepts `connection_id` query parameter
+  - Queries usage history to exclude used questions
+  - Returns error when all questions in category exhausted
+- [x] **Category Badges in History**: Display question categories in conversation history
+  - Modified `create.py` to store category with usage records
+  - Modified `list.py` to return category in usage list
+  - Frontend displays colored category badges (🌱 Life, 🎲 Random, 🤔 Deep, ✨ Experiences)
+- [x] **Better Error Handling**: Show user-friendly message when all questions used
+  - Yellow alert box displays: "You've used all questions in the 'X' category!"
+- [x] **UI Polish**: Improved indentation and spacing in conversation history
+
+**Files Modified:**
+- Backend: `get_random.py`, `create.py`, `list.py`
+- Frontend: `ConnectionDetailPage.tsx`, `App.tsx` (navbar)
+
+**Verification:**
+- [x] Cannot use same question twice with one connection
+- [x] Can reuse same question with different connections
+- [x] Category badges visible in conversation history
+- [x] Clear error message when category exhausted
+- [x] Navbar works on all pages
+
+---
+
 ### **PHASE 6: Stripe Billing** (Days 19-21) 🔴
 
 #### Day 19: Stripe Setup
