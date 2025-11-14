@@ -1,6 +1,6 @@
 1. Add a maximum input of text so it won'd toverload the database.
 
-2. Changt the page title (💕FlirtDeck) and the favicon to 💕?
+2. Change the page title (💕FlirtDeck) and the favicon to 💕?
 
 3. WHen the auth token expires, shouldn't the app automatically log out instead of giving us a 401 error (I think it is 401.. .not sure)? But I know I can't fetch questions anymore. 
 
