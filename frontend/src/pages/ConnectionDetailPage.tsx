@@ -308,11 +308,16 @@ export default function ConnectionDetailPage() {
               </label>
               <textarea
                 value={theirAnswer}
-                onChange={(e) => setTheirAnswer(e.target.value)}
+                onChange={(e) => setTheirAnswer(e.target.value.slice(0, 1000))}
                 rows={3}
+                maxLength={1000}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                 placeholder="Their response..."
               />
+              <div className={`text-right text-sm mt-1 ${theirAnswer.length >= 1000 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
+                {theirAnswer.length >= 1000 && '⚠️ Maximum length reached! '}
+                {theirAnswer.length}/1000 characters
+              </div>
             </div>
             
             <div>
@@ -321,11 +326,16 @@ export default function ConnectionDetailPage() {
               </label>
               <textarea
                 value={myAnswer}
-                onChange={(e) => setMyAnswer(e.target.value)}
+                onChange={(e) => setMyAnswer(e.target.value.slice(0, 1000))}
                 rows={3}
+                maxLength={1000}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                 placeholder="Your response..."
               />
+              <div className={`text-right text-sm mt-1 ${myAnswer.length >= 1000 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
+                {myAnswer.length >= 1000 && '⚠️ Maximum length reached! '}
+                {myAnswer.length}/1000 characters
+              </div>
             </div>
             
             <div className="flex gap-3">
@@ -408,19 +418,28 @@ export default function ConnectionDetailPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">They said:</label>
                       <textarea
                         value={editTheirAnswer}
-                        onChange={(e) => setEditTheirAnswer(e.target.value)}
+                        onChange={(e) => setEditTheirAnswer(e.target.value.slice(0, 1000))}
                         rows={2}
+                        maxLength={1000}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
                       />
+                      <div className={`text-right text-sm mt-1 ${editTheirAnswer.length >= 1000 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
+                        {editTheirAnswer.length >= 1000 && '⚠️ Maximum length reached! '}
+                        {editTheirAnswer.length}/1000 characters
+                      </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">I said:</label>
                       <textarea
                         value={editMyAnswer}
-                        onChange={(e) => setEditMyAnswer(e.target.value)}
+                        onChange={(e) => setEditMyAnswer(e.target.value.slice(0, 1000))}
                         rows={2}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
                       />
+                      <div className={`text-right text-sm mt-1 ${editMyAnswer.length >= 1000 ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
+                        {editMyAnswer.length >= 1000 && '⚠️ Maximum length reached! '}
+                        {editMyAnswer.length}/1000 characters
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -458,3 +477,4 @@ export default function ConnectionDetailPage() {
     </div>
   );
 }
+
