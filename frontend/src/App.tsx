@@ -8,7 +8,9 @@ import QuestionsPage from './pages/QuestionsPage';
 import ConnectionsPage from './pages/ConnectionsPage';
 import ConnectionDetailPage from './pages/ConnectionDetailPage';
 import SettingsPage from './pages/SettingsPage';
-import BillingPage from './pages/BillingPage'; 
+import BillingPage from './pages/BillingPage';
+import BillingSuccessPage from './pages/BillingSuccessPage';
+import BillingCancelPage from './pages/BillingCancelPage';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer'; 
 
@@ -98,6 +100,18 @@ const AppContent = () => {
             <Navbar />
             <BillingPage />
             <Footer />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/billing/success" element={
+          <ProtectedRoute>
+            <BillingSuccessPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/billing/cancel" element={
+          <ProtectedRoute>
+            <BillingCancelPage />
           </ProtectedRoute>
         } />
 

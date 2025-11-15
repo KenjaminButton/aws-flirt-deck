@@ -12,6 +12,7 @@
  */
 
 import { useAuth } from '../context/AuthContext';
+import apiClient from '../api/client';
 
 const BillingPage = () => {
   const { user } = useAuth();
@@ -22,9 +23,17 @@ const BillingPage = () => {
 
   const isPremium = user.subscription_status === 'premium';
 
-  // Placeholder functions for Phase 6 Stripe integration
-  const handleUpgrade = () => {
-    alert('💳 Stripe integration coming in Phase 6!\n\nThis will redirect you to Stripe Checkout to upgrade to Premium.');
+  const handleUpgrade = async () => {
+    try {
+      const response = await apiClient.post('/billing/create-checkout');
+      const { checkout_url } = response.data;
+      
+      // Redirect to Stripe Checkout
+      window.location.href = checkout_url;
+    } catch (err) {
+      console.error('Failed to create checkout session:', err);
+      alert('Failed to start checkout. Please try again.');
+    }
   };
 
   const handleCancelSubscription = () => {

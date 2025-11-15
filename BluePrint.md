@@ -754,61 +754,157 @@ curl https://YOUR-API-URL/prod/auth/me
 #### Day 19: Stripe Setup
 
 **Tasks:**
-- [ ] Create Stripe account: https://stripe.com/
-- [ ] Stay in TEST mode
-- [ ] Create product: "FlirtDeck Premium"
+- [x] Create Stripe account: https://stripe.com/
+- [x] Stay in TEST mode
+- [x] Create product: "FlirtDeck Premium"
   - Price: $2.99/month
   - Recurring
   - Copy Price ID (e.g., `price_xxxxx`)
-- [ ] Get API keys:
+- [x] Get API keys:
   - Publishable key (starts with `pk_test_`)
   - Secret key (starts with `sk_test_`)
-- [ ] Store in AWS Secrets Manager:
+- [x] Store in AWS Secrets Manager:
 ```bash
   aws secretsmanager create-secret \
     --name flirtdeck/stripe \
     --secret-string '{"secret_key":"sk_test_xxxxx","price_id":"price_xxxxx"}' \
     --region us-west-2
 ```
-- [ ] Grant Lambda permission to read secret
+- [x] Grant Lambda permission to read secret
 
 **Verification:**
-- [ ] Stripe product created
-- [ ] Secret stored in AWS
-- [ ] Lambda can read secret (test with boto3)
+- [x] Stripe product created
+- [x] Secret stored in AWS
 
 **⚠️ Trouble Spot:** Don't commit Stripe keys to Git!
 
 ---
 
-#### Day 20: Checkout Flow
+#### Day 20: Checkout Flow ✅
 
-**Tasks:**
-- [ ] Create Lambda: `lambda_functions/billing/create_checkout.py`
-  - Get user ID and email from JWT
-  - Get Stripe keys from Secrets Manager
-  - Create Stripe Customer (if doesn't exist)
-  - Create Checkout Session:
-    - Price ID from secret
-    - Success URL: `{frontend_url}/billing/success`
+**Overview:**
+Implemented the complete Stripe checkout flow allowing users to upgrade from Free to Premium. The flow works end-to-end (payment processing) but subscription activation requires the webhook handler (Day 21).
+
+**Backend Infrastructure:**
+
+**Lambda Layer Setup (Stripe SDK):**
+- [x] Created Lambda Layer for Stripe Python library
+  - Created folder structure: `backend/layers/stripe/python/`
+  - Installed Stripe SDK: `pip install stripe -t backend/layers/stripe/python/`
+  - Created ZIP: `zip -r stripe-layer.zip python/` (~6MB)
+  - Added layer to CDK in `api_stack.py` using `lambda_.LayerVersion`
+  - Layer is reusable across all billing Lambda functions
+
+**Lambda Function: `create_checkout.py`:**
+- [x] Created `lambda_functions/billing/create_checkout.py`
+  - Fetches Stripe keys from AWS Secrets Manager (`flirtdeck/stripe`)
+  - Extracts user_id and email from JWT token claims
+  - Searches for existing Stripe Customer by email
+  - Creates new Stripe Customer if doesn't exist (with user_id metadata)
+  - Creates Stripe Checkout Session:
+    - Mode: `subscription`
+    - Price ID from Secrets Manager
+    - Success URL: `{frontend_url}/billing/success?session_id={CHECKOUT_SESSION_ID}`
     - Cancel URL: `{frontend_url}/billing/cancel`
-    - Customer email pre-filled
-    - Metadata: user_id
-  - Return checkout session URL
-- [ ] Add route: `POST /billing/create-checkout`
-- [ ] Deploy
-- [ ] Create frontend: `src/pages/UpgradePage.tsx`
-  - Shows benefits of premium
-  - "Upgrade for $2.99/month" button
-  - Calls API → Redirects to Stripe Checkout
-- [ ] Create success/cancel pages
+    - Metadata: `user_id` (for webhook processing)
+  - Returns checkout URL to frontend
+  - Handles Stripe errors gracefully
 
-**Verification:**
-- [ ] Click "Upgrade" → Redirected to Stripe
-- [ ] Use test card: 4242 4242 4242 4242
-- [ ] Complete payment → Redirected to success page
+**API Gateway Route:**
+- [x] Added `POST /billing/create-checkout` endpoint
+  - Requires Cognito authorization
+  - Attached Stripe Lambda layer to function
+  - Environment variable: `FRONTEND_URL` (set to localhost for dev)
+  - Lambda timeout: 30 seconds
 
-**⚠️ Note:** Subscription not yet activated (need webhook).
+**CDK Updates (`api_stack.py`):**
+- [x] Created Stripe Lambda Layer from ZIP
+- [x] Modified `create_lambda_function()` to accept optional `layers` parameter
+- [x] Added billing resource and create-checkout endpoint
+- [x] Attached Stripe layer to billing Lambda
+- [x] Added `FRONTEND_URL` to all Lambda environment variables
+
+**Frontend Implementation:**
+
+**Updated BillingPage:**
+- [x] Modified `handleUpgrade()` function
+  - Calls `apiClient.post('/billing/create-checkout')`
+  - Extracts `checkout_url` from response
+  - Redirects to Stripe Checkout: `window.location.href = checkout_url`
+  - Error handling with user-friendly alert
+
+**Success Page:**
+- [x] Created `src/pages/BillingSuccessPage.tsx`
+  - Full-screen success message with checkmark
+  - Displays session_id from URL params (for support)
+  - Shows "Processing payment..." notice (subscription not yet active)
+  - Buttons: "Go to Dashboard" and "Create Unlimited Connections"
+  - Auto-redirects to dashboard after 5 seconds
+
+**Cancel Page:**
+- [x] Created `src/pages/BillingCancelPage.tsx`
+  - Full-screen cancel message
+  - Reassures user they weren't charged
+  - Premium benefits reminder
+  - Buttons: "Try Again - Upgrade to Premium" and "Back to Dashboard"
+  - Support email link
+
+**Routing:**
+- [x] Added routes to `App.tsx`:
+  - `/billing` - Protected route with Navbar + Footer
+  - `/billing/success` - Protected route, no Navbar/Footer (full screen)
+  - `/billing/cancel` - Protected route, no Navbar/Footer (full screen)
+
+**Files Created:**
+- `backend/lambda_functions/billing/create_checkout.py`
+- `backend/layers/stripe/python/` (with Stripe SDK)
+- `backend/layers/stripe/stripe-layer.zip`
+- `frontend/src/pages/BillingSuccessPage.tsx`
+- `frontend/src/pages/BillingCancelPage.tsx`
+
+**Files Modified:**
+- `backend/infrastructure/infrastructure/api_stack.py` (layer, route, env vars)
+- `frontend/src/pages/BillingPage.tsx` (handleUpgrade function)
+- `frontend/src/App.tsx` (routes)
+
+**Testing & Verification:**
+- [x] Deployed via `cdk deploy ApiStack`
+- [x] Tested with curl - verified checkout URL returned
+- [x] Clicked "Upgrade to Premium" button
+- [x] Redirected to Stripe Checkout successfully
+- [x] Used test card: `4242 4242 4242 4242`
+- [x] Completed payment successfully
+- [x] Redirected to success page (`/billing/success`)
+- [x] Success page displayed correctly with session_id
+- [x] Auto-redirect to dashboard worked
+
+**Current State:**
+✅ Checkout flow works end-to-end
+✅ Stripe receives payment successfully
+❌ User subscription_status NOT updated (still shows "free")
+❌ Database not updated with premium status
+
+**Why Subscription Not Active:**
+The webhook handler (Day 21) is required to:
+1. Listen for Stripe events (`checkout.session.completed`)
+2. Extract user_id from metadata
+3. Update DynamoDB: `subscription_status = 'premium'`
+4. Store Stripe customer_id and subscription_id
+
+**Technical Decisions Made:**
+- **Lambda Layer vs Packaging:** Chose Lambda Layer for cleaner architecture
+- **Customer Management:** Create Stripe Customer on first checkout (reusable)
+- **Success/Cancel Pages:** No Navbar/Footer (full-screen experience)
+- **Auto-redirect:** 5-second timer on success page for better UX
+
+**⚠️ Important Notes:**
+- Stripe keys stored in AWS Secrets Manager (never in code)
+- Test mode active (using `pk_test_` and `sk_test_` keys)
+- Frontend URL hardcoded to localhost (update for production)
+- Webhook signing secret needed for Day 21
+
+**Next: Day 21**
+Build webhook handler to activate subscriptions and handle cancellations.
 
 ---
 

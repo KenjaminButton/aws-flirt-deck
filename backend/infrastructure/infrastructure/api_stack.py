@@ -45,6 +45,25 @@ class ApiStack(Stack):
         self.user_pool = user_pool
         self.table_name = table_name
 
+        # Create Stripe Lambda Layer
+        # This layer contains the Stripe Python library
+        self.stripe_layer = lambda_.LayerVersion(
+            self,
+            "StripeLayer",
+            code=lambda_.Code.from_asset(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    "..",
+                    "..",
+                    "layers",
+                    "stripe",
+                    "stripe-layer.zip"
+                )
+            ),
+            compatible_runtimes=[lambda_.Runtime.PYTHON_3_9],
+            description="Stripe Python SDK for billing functions"
+        )
+
         # Create IAM role for Lambda execution
         self.lambda_role = iam.Role(
             self,
@@ -240,9 +259,6 @@ class ApiStack(Stack):
             authorization_type=apigw.AuthorizationType.COGNITO,
         )
 
-
-
-
         # GET /connections/{connection_id}/usage - List usage records
         list_usage_lambda = self.create_lambda_function(
             function_id="ListUsageFunction",
@@ -306,6 +322,26 @@ class ApiStack(Stack):
             authorization_type=apigw.AuthorizationType.COGNITO,
         )
 
+        # ==================== /billing ENDPOINTS ====================
+        billing_resource = self.api.root.add_resource("billing")
+
+        # POST /billing/create-checkout - Create Stripe checkout session
+        create_checkout_lambda = self.create_lambda_function(
+            function_id="CreateCheckoutFunction",
+            handler_path="billing",
+            handler_file="create_checkout",
+            description="Create Stripe checkout session for premium upgrade",
+            layers=[self.stripe_layer],
+        )
+
+        billing_resource.add_resource("create-checkout").add_method(
+            "POST",
+            apigw.LambdaIntegration(create_checkout_lambda),
+            authorizer=self.authorizer,
+            authorization_type=apigw.AuthorizationType.COGNITO,
+        )
+
+
         # Add resource tags
         Tags.of(self).add("Project", "FlirtDeck")
         Tags.of(self).add("Environment", "Production")
@@ -318,6 +354,7 @@ class ApiStack(Stack):
         handler_file: str,
         description: str,
         timeout: int = 30,
+        layers: list = None,
     ) -> lambda_.Function:
         """Create Lambda function with consistent configuration"""
 
@@ -345,6 +382,7 @@ class ApiStack(Stack):
             role=self.lambda_role,
             timeout=Duration.seconds(timeout),
             description=description,
+            layers=layers or [],
             environment={
                 "TABLE_NAME": self.table_name,
                 "USER_POOL_ID": self.user_pool.user_pool_id,
