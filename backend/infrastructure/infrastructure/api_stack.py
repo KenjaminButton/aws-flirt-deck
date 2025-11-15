@@ -77,6 +77,20 @@ class ApiStack(Stack):
             )
         )
 
+        # Grant Secrets Manager permissions to Lambda role
+        # Allows Lambda to read Stripe keys from AWS Secrets Manager
+        self.lambda_role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    "secretsmanager:GetSecretValue"
+                ],
+                resources=[
+                    f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:flirtdeck/stripe-*"
+                ]
+            )
+        )
+
         # Create REST API Gateway
         self.api = apigw.RestApi(
             self,
