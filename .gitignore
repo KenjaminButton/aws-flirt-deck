@@ -2,6 +2,10 @@
 DEVNOTES.md
 DEVSECRETS.md
 
+# Stripe Lambda layer build artifacts
+backend/layers/stripe/python/
+backend/layers/stripe/stripe-layer.zip
+
 # Python
 __pycache__/
 *.py[cod]
