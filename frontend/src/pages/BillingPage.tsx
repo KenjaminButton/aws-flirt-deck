@@ -13,6 +13,8 @@
 
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
+import { useState } from 'react';  
+
 
 const BillingPage = () => {
   const { user } = useAuth();
@@ -22,8 +24,10 @@ const BillingPage = () => {
   }
 
   const isPremium = user.subscription_status === 'premium';
+  const [upgrading, setUpgrading] = useState(false); 
 
   const handleUpgrade = async () => {
+    setUpgrading(true);
     try {
       const response = await apiClient.post('/billing/create-checkout');
       const { checkout_url } = response.data;
@@ -33,6 +37,7 @@ const BillingPage = () => {
     } catch (err) {
       console.error('Failed to create checkout session:', err);
       alert('Failed to start checkout. Please try again.');
+      setUpgrading(false); 
     }
   };
 
@@ -82,9 +87,10 @@ const BillingPage = () => {
             {!isPremium ? (
               <button
                 onClick={handleUpgrade}
-                className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl shadow-lg transform transition-all hover:scale-105"
+                disabled={upgrading}  
+                className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl shadow-lg transform transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"  // ADD disabled: styles
               >
-                ⭐ Upgrade to Premium
+                {upgrading ? '⏳ Redirecting to Stripe...' : '⭐ Upgrade to Premium'} 
               </button>
             ) : (
               <button
@@ -179,9 +185,10 @@ const BillingPage = () => {
             ) : (
               <button
                 onClick={handleUpgrade}
-                className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl shadow-lg transform transition-all hover:scale-105"
+                disabled={upgrading}
+                className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl shadow-lg transform transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"  
               >
-                Upgrade Now
+                {upgrading ? '⏳ Redirecting to Stripe...' : '⭐ Upgrade to Premium'}  
               </button>
             )}
           </div>

@@ -908,42 +908,170 @@ Build webhook handler to activate subscriptions and handle cancellations.
 
 ---
 
-#### Day 21: Webhook Handler
+#### Day 21: Webhook Handler ✅
 
-**Tasks:**
-- [ ] Create Lambda: `lambda_functions/billing/webhook.py`
-  - Verify Stripe signature
-  - Handle events:
-    - `checkout.session.completed` → Update user to premium
-    - `customer.subscription.deleted` → Downgrade to free
-  - Update DynamoDB: subscription_status, stripe_customer_id, stripe_subscription_id
-- [ ] Add route: `POST /billing/webhook` (no auth, uses Stripe signature)
-- [ ] Deploy
-- [ ] Get webhook endpoint URL
-- [ ] Configure in Stripe Dashboard:
-  - Developers → Webhooks → Add endpoint
-  - URL: `https://your-api-url/prod/billing/webhook`
-  - Events: `checkout.session.completed`, `customer.subscription.deleted`
-  - Copy webhook signing secret
-- [ ] Add signing secret to Secrets Manager
-- [ ] For local testing: Install Stripe CLI
+**Overview:**
+Implemented Stripe webhook handler to automatically activate/deactivate premium subscriptions when users complete payment or cancel. This is the final critical piece that makes the billing flow functional end-to-end.
+
+**Backend Implementation:**
+
+**Lambda Function: `webhook.py`:**
+- [x] Created `lambda_functions/billing/webhook.py`
+  - Fetches webhook signing secret from AWS Secrets Manager
+  - Verifies Stripe signature using `stripe.Webhook.construct_event()`
+  - Handles two event types:
+    - `checkout.session.completed`: Extracts user_id from metadata, updates DynamoDB to `subscription_status='premium'`, stores `stripe_customer_id` and `stripe_subscription_id`
+    - `customer.subscription.deleted`: Finds user by subscription metadata, downgrades to `subscription_status='free'`
+  - Returns 200 OK to Stripe (even on errors to prevent retries)
+  - Comprehensive error handling and logging
+
+**API Gateway Route:**
+- [x] Added `POST /billing/webhook` endpoint
+  - **NO Cognito authorization** (`AuthorizationType.NONE`)
+  - Uses Stripe signature verification instead
+  - Attached Stripe Lambda layer for SDK access
+  - Publicly accessible (Stripe calls it, not users)
+
+**CDK Updates (`api_stack.py`):**
+- [x] Added webhook Lambda function with Stripe layer
+- [x] Created webhook route without authorization
+- [x] Deployed via `cdk deploy ApiStack`
+
+**Stripe Configuration:**
+
+**Webhook Setup in Stripe Dashboard:**
+- [x] Navigated to: Developers → Webhooks (Note: not in sidebar, had to find it)
+- [x] Created "event destination" (Stripe's terminology for webhook endpoint)
+- [x] Selected events:
+  - ✅ `checkout.session.completed`
+  - ✅ `customer.subscription.deleted`
+- [x] Configured destination:
+  - Type: Webhook endpoint
+  - Events from: Your account
+  - API version: 2020-08-27 (default)
+  - Endpoint URL: `https://fdhf52udwe.execute-api.us-west-2.amazonaws.com/prod/billing/webhook`
+  - Description: FlirtDeck Production Webhook
+- [x] Copied webhook signing secret (`whsec_...`)
+
+**AWS Secrets Manager Update:**
+- [x] Updated existing secret with webhook signing secret:
 ```bash
-  stripe listen --forward-to http://localhost:3000/billing/webhook
+aws secretsmanager update-secret \
+  --secret-id flirtdeck/stripe \
+  --secret-string '{"secret_key":"rk_test_...","price_id":"price_...","webhook_secret":"whsec_..."}' \
+  --region us-west-2
 ```
+- [x] Verified update (new VersionId returned)
 
-**Verification:**
-- [ ] Complete Stripe checkout
-- [ ] Webhook fires
-- [ ] Check DynamoDB: user subscription_status = 'premium'
-- [ ] Refresh app → Can now create unlimited connections
-- [ ] Cancel subscription in Stripe → Webhook fires → Status = 'free'
+**Frontend Polish:**
 
-**⚠️ MAJOR Trouble Spot:** Webhooks are notoriously difficult. Common issues:
-- Signature verification fails → Check signing secret is correct
-- Webhook not firing → Check Stripe dashboard logs
-- Budget 3-4 hours for debugging
+**Loading State for Upgrade Button:**
+- [x] Added `upgrading` state to BillingPage.tsx
+- [x] Button shows "⏳ Redirecting to Stripe..." while creating checkout session
+- [x] Button disabled during redirect to prevent double-clicks
+- [x] Applied to both upgrade buttons (Current Plan card + Premium card)
 
-**Checkpoint:** Full payment flow works end-to-end. MVP is functionally complete!
+**Bug Fixes:**
+- [x] **Fix 1: Connections page showing "upgrade" message for premium users**
+  - Added condition: `&& user.subscription_status === 'free'` to free tier notice
+  - Premium users no longer see incorrect upgrade prompt
+  - Added `useAuth()` hook to ConnectionsPage
+  
+- [x] **Fix 2: Settings page missing subscription status**
+  - Added "Subscription Plan" field showing ⭐ Premium or 🆓 Free
+  - Positioned after Email field for logical flow
+  - Consistent styling with other read-only fields
+
+**Files Created:**
+- `backend/lambda_functions/billing/webhook.py`
+
+**Files Modified:**
+- `backend/infrastructure/infrastructure/api_stack.py` (webhook route)
+- `frontend/src/pages/BillingPage.tsx` (loading state, useState import)
+- `frontend/src/pages/ConnectionsPage.tsx` (conditional free tier message)
+- `frontend/src/pages/SettingsPage.tsx` (subscription status display)
+
+**Testing & Verification:**
+
+**Full Flow Test:**
+- [x] Navigated to `/billing` as free user
+- [x] Clicked "Upgrade to Premium"
+- [x] Button showed "⏳ Redirecting to Stripe..." (loading state worked)
+- [x] Redirected to Stripe Checkout
+- [x] Completed payment with test card (`4242 4242 4242 4242`)
+- [x] Redirected to `/billing/success` page
+- [x] Checked Stripe Dashboard → Webhooks → Event logs
+  - ✅ `checkout.session.completed` event sent
+  - ✅ Status: 200 OK (webhook processed successfully)
+- [x] Verified DynamoDB via AWS CLI:
+```bash
+aws dynamodb get-item \
+  --table-name flirtdeck-table \
+  --key '{"PK":{"S":"USER#d8d17330-5091-70f2-4c14-33f8f5165142"},"SK":{"S":"PROFILE"}}' \
+  --region us-west-2
+```
+  - ✅ `subscription_status: "premium"`
+  - ✅ `stripe_customer_id: "cus_..."`
+  - ✅ `stripe_subscription_id: "sub_..."`
+- [x] Refreshed app → Dashboard shows "⭐ Premium"
+- [x] Billing page shows "✓ Active Plan" on Premium card
+- [x] Settings page shows "⭐ Premium" subscription status
+- [x] Created 2nd connection successfully (unlimited connections verified)
+- [x] Connections page no longer shows "upgrade" message
+
+**Subscription Cancellation Test:**
+- [ ] Skipped for MVP (code implemented, not tested to avoid extra Stripe operations)
+- Code ready: `handle_subscription_deleted()` function will downgrade to free
+
+**Local Testing (Optional - Not Done):**
+- [ ] Stripe CLI not installed (not needed for MVP)
+- [ ] Webhook works in production via deployed endpoint
+
+**Technical Challenges Encountered:**
+
+1. **Stripe UI Changes**: 
+   - Blueprint mentioned "Webhooks" in sidebar, but Stripe uses "event destinations"
+   - Found under Developers (bottom of sidebar, not top navigation)
+   - "Add endpoint" is now "Add destination"
+
+2. **Signature Verification**:
+   - Initially concerned about missing webhook_secret in Secrets Manager
+   - Fixed by updating secret with all three keys (secret_key, price_id, webhook_secret)
+   - Lambda now successfully verifies Stripe signatures
+
+3. **Loading State**:
+   - User feedback needed during checkout redirect (can take 2-3 seconds)
+   - Added upgrading state with disabled button and loading text
+   - Improves UX significantly
+
+**Current State:**
+✅ **MVP IS FUNCTIONALLY COMPLETE!**
+
+**End-to-End Flow Working:**
+1. User logs in with Google OAuth
+2. Creates connections (1 for free)
+3. Browses questions by category
+4. Records answers with connections
+5. Sees conversation history with category badges
+6. Clicks "Upgrade to Premium"
+7. Completes Stripe checkout
+8. Webhook fires and activates premium
+9. Can now create unlimited connections
+10. All premium features active
+
+**What's NOT Implemented (By Design):**
+- Subscription cancellation flow (code exists, not tested)
+- Local webhook testing with Stripe CLI (not needed for deployed MVP)
+- Live mode Stripe (still in test mode - correct for MVP)
+
+**Ready for Production Deployment:**
+- Frontend needs deployment to S3/CloudFront
+- CORS needs updating for production domain
+- Cognito callback URLs need production domain
+- Stripe webhook URL needs production endpoint
+- Switch to live Stripe keys when ready to accept real payments
+
+**Checkpoint:** Full payment flow works end-to-end. Users can upgrade, get charged, and have their accounts automatically activated. MVP is functionally complete and ready for deployment!
 
 ---
 

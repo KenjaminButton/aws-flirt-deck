@@ -341,6 +341,20 @@ class ApiStack(Stack):
             authorization_type=apigw.AuthorizationType.COGNITO,
         )
 
+        # POST /billing/webhook - Stripe webhook handler (NO AUTH)
+        webhook_lambda = self.create_lambda_function(
+            function_id="WebhookFunction",
+            handler_path="billing",
+            handler_file="webhook",
+            description="Handle Stripe webhook events",
+            layers=[self.stripe_layer],
+        )
+
+        billing_resource.add_resource("webhook").add_method(
+            "POST",
+            apigw.LambdaIntegration(webhook_lambda),
+            authorization_type=apigw.AuthorizationType.NONE  # NO AUTH - Stripe calls this
+        )
 
         # Add resource tags
         Tags.of(self).add("Project", "FlirtDeck")
