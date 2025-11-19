@@ -1,6 +1,7 @@
 # My Custom Files:
 DEVNOTES.md
 DEVSECRETS.md
+questions_data_update.py
 
 # Stripe Lambda layer build artifacts
 backend/layers/stripe/python/

@@ -1567,7 +1567,7 @@ cdk deploy ApiStack  # or whichever stack changed
 #### Day 23: Backend CI/CD
 
 **Tasks:**
-- [ ] Create `stacks/cicd_stack.py`:
+- [ ] Create `infrastructure/cicd_stack.py`:
   - CodePipeline
   - Source: GitHub connection
   - Build: CodeBuild project

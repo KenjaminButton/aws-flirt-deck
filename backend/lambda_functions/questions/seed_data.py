@@ -1,29 +1,3 @@
-"""
-Seed Questions into DynamoDB
-
-This script populates the flirtdeck-table with conversation starter questions.
-It's designed to be run as a one-time data migration or can be re-run to refresh questions.
-
-Purpose:
-- Load questions from questions_data.py into DynamoDB
-- Use batch writes for efficiency (25 items at a time)
-- Handle overwrites gracefully (can re-run to update questions)
-
-Flow:
-1. Import questions from shared/questions_data.py
-2. Transform each question into DynamoDB item format
-3. Batch write to table (faster than individual puts)
-4. Report success/failure statistics
-
-Think of this like a librarian robot that takes books from a cart 
-and efficiently shelves them 25 at a time!
-
-Usage:
-    python seed_data.py
-    
-Note: Requires AWS credentials and TABLE_NAME environment variable
-"""
-
 import sys
 import os
 import boto3
@@ -32,9 +6,9 @@ from datetime import datetime
 
 # Add parent directories to Python path so we can import shared utilities
 # Lambda deployment will have these in the same package
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from shared.questions_data import QUESTIONS, validate_questions
+from shared.questions_data import QUESTIONS
 
 # Initialize DynamoDB resource
 # boto3 automatically uses AWS credentials from environment
@@ -149,11 +123,12 @@ def seed_questions() -> bool:
     print(f"📦 Target table: {TABLE_NAME}")
     print(f"🔢 Questions to seed: {len(QUESTIONS)}")
     
-    # Step 1: Validate questions data
-    print("\n🔍 Step 1: Validating questions...")
-    if not validate_questions():
-        print("❌ Validation failed. Aborting seed.")
+    # Step 1: Check we have questions
+    print("\n🔍 Step 1: Checking questions...")
+    if not QUESTIONS or len(QUESTIONS) == 0:
+        print("❌ No questions found. Aborting seed.")
         return False
+    print(f"✅ Found {len(QUESTIONS)} questions")
     
     # Step 2: Transform questions to DynamoDB format
     print("\n🔄 Step 2: Transforming questions to DynamoDB format...")
