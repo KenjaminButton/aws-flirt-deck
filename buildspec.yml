@@ -17,12 +17,19 @@ phases:
       - pip install -r requirements.txt
 
   build:
-    # Phase 2: Deploy the infrastructure
-    commands:
-      - echo "Synthesizing CDK stacks..."
-      - cdk synth
-      - echo "Deploying all stacks..."
-      - cdk deploy --all --require-approval never
+      # Phase 2: Build assets and deploy infrastructure
+      commands:
+        - echo "Building Stripe Lambda layer..."
+        - mkdir -p backend/layers/stripe/python
+        - pip install stripe -t backend/layers/stripe/python/
+        - cd backend/layers/stripe
+        - zip -r stripe-layer.zip python/
+        - cd ../../../
+        - echo "Synthesizing CDK stacks..."
+        - cd backend/infrastructure
+        - cdk synth
+        - echo "Deploying all stacks..."
+        - cdk deploy --all --require-approval never
 
   post_build:
     # Phase 3: Cleanup and reporting
