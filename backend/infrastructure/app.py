@@ -14,6 +14,9 @@ from infrastructure.database_stack import DatabaseStack
 from infrastructure.cognito_stack import CognitoStack
 from infrastructure.api_stack import ApiStack
 from infrastructure.frontend_stack import FrontendStack
+from infrastructure.cicd_stack import CicdStack 
+
+
 
 # Create the CDK app instance
 # This is the root construct that contains all our stacks
@@ -71,6 +74,16 @@ frontend_stack = FrontendStack(
     env=env,
     description="S3 + CloudFront hosting for React frontend"
 )
+
+# Deploy CI/CD Pipeline Stack to us-west-2
+# Creates CodePipeline for automated backend deployments
+cicd_stack = CicdStack(
+    app,
+    "CicdStack",
+    env=env,
+    description="CI/CD pipeline for automated FlirtDeck backend deployments"
+)
+
 
 # Synthesize all stacks into CloudFormation templates
 # This generates the JSON templates that AWS will use to create resources

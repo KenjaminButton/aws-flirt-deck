@@ -1,0 +1,30 @@
+version: 0.2
+
+# This file defines the build steps for CodeBuild
+# Think of it as a script that runs inside the build container
+
+phases:
+  install:
+    # Phase 1: Install required tools
+    runtime-versions:
+      python: 3.11
+      nodejs: 18
+    commands:
+      - echo "Installing AWS CDK..."
+      - npm install -g aws-cdk
+      - echo "Installing Python dependencies..."
+      - cd backend/infrastructure
+      - pip install -r requirements.txt
+
+  build:
+    # Phase 2: Deploy the infrastructure
+    commands:
+      - echo "Synthesizing CDK stacks..."
+      - cdk synth
+      - echo "Deploying all stacks..."
+      - cdk deploy --all --require-approval never
+
+  post_build:
+    # Phase 3: Cleanup and reporting
+    commands:
+      - echo "Build completed successfully!"
