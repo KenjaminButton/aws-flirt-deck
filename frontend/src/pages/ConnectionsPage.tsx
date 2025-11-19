@@ -199,7 +199,7 @@ const ConnectionsPage: React.FC = () => {
         )}
 
         {/* Free Tier Info */}
-        {connections.length > 0 && user.subscription_status === 'free' && (
+        {connections.length > 0 && user?.subscription_status === 'free' && (
           <div className="mt-6 p-4 bg-blue-50 rounded-xl">
             <p className="text-sm text-blue-700">
               💡 <span className="font-medium">You have {connections.length} connection{connections.length !== 1 ? 's' : ''}</span>

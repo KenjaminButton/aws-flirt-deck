@@ -13,6 +13,7 @@ import aws_cdk as cdk
 from infrastructure.database_stack import DatabaseStack
 from infrastructure.cognito_stack import CognitoStack
 from infrastructure.api_stack import ApiStack
+from infrastructure.frontend_stack import FrontendStack
 
 # Create the CDK app instance
 # This is the root construct that contains all our stacks
@@ -51,6 +52,7 @@ api_stack = ApiStack(
     app,
     "ApiStack",
     user_pool=cognito_stack.user_pool,  # Pass User Pool for authorization
+    user_pool_client=cognito_stack.user_pool_client,  
     table_name=database_stack.table.table_name,  # Pass table name for Lambda env vars
     env=env,
     description="API Gateway with Lambda functions for backend endpoints"
@@ -60,6 +62,15 @@ api_stack = ApiStack(
 # Ensures stacks are deployed in the correct order
 api_stack.add_dependency(database_stack)
 api_stack.add_dependency(cognito_stack)
+
+# Deploy FrontendStack to us-west-2
+# Creates S3 bucket and CloudFront distribution for React app
+frontend_stack = FrontendStack(
+    app,
+    "FrontendStack",
+    env=env,
+    description="S3 + CloudFront hosting for React frontend"
+)
 
 # Synthesize all stacks into CloudFormation templates
 # This generates the JSON templates that AWS will use to create resources

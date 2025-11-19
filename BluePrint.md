@@ -1075,49 +1075,490 @@ aws dynamodb get-item \
 
 ---
 
-### **PHASE 7: Frontend Hosting** (Day 22) 🟢
+### **PHASE 7: Frontend Hosting & Production Deployment** (Day 22-23) 🟢
 
-#### Day 22: Deploy Frontend to S3 + CloudFront
+#### Overview
+Deploy the React frontend to S3 with CloudFront CDN. This phase involves careful coordination between frontend build configuration, API Gateway CORS settings, Cognito OAuth URLs, and Google OAuth credentials.
 
-**Tasks:**
-- [ ] Create `stacks/frontend_stack.py`:
-  - S3 bucket for static hosting
-  - CloudFront distribution
-  - OAI (Origin Access Identity)
-  - Default root object: index.html
-  - Error pages: 404 → /index.html (for SPA routing)
-- [ ] Deploy stack:
-```bash
-  cdk deploy FrontendStack
-```
-- [ ] Copy CloudFront URL from outputs
-- [ ] Update `.env.local` → `.env.production`:
-```
-  VITE_REDIRECT_URI=https://YOUR-CLOUDFRONT-URL/auth/callback
-```
-- [ ] Build frontend:
-```bash
-  npm run build
-```
-- [ ] Upload to S3:
-```bash
-  aws s3 sync dist/ s3://YOUR-BUCKET-NAME/ --delete
-```
-- [ ] Invalidate CloudFront cache:
-```bash
-  aws cloudfront create-invalidation --distribution-id YOUR-DIST-ID --paths "/*"
-```
-- [ ] Update Google OAuth:
-  - Add CloudFront URL to authorized redirect URIs
-- [ ] Update Cognito User Pool Client:
-  - Add CloudFront callback/logout URLs
+#### **Pre-Deployment Checklist**
 
-**Verification:**
-- [ ] Visit CloudFront URL → App loads
-- [ ] Can login with Google
-- [ ] Full flow works in production
+Before starting deployment, ensure you have:
+1. ✅ Backend API deployed and tested (ApiStack)
+2. ✅ Cognito User Pool with Google OAuth configured
+3. ✅ Google OAuth credentials (Client ID & Secret)
+4. ✅ API Gateway URL from ApiStack outputs
 
-**Checkpoint:** App is live and accessible!
+#### **Step 1: Create Frontend Infrastructure Stack**
+
+Create `backend/infrastructure/infrastructure/frontend_stack.py`:
+```python
+from aws_cdk import (
+    Stack,
+    aws_s3 as s3,
+    aws_cloudfront as cloudfront,
+    aws_cloudfront_origins as origins,
+    RemovalPolicy,
+    CfnOutput,
+    Tags
+)
+from constructs import Construct
+
+class FrontendStack(Stack):
+    """
+    FrontendStack: S3 + CloudFront for React SPA hosting
+    
+    Creates:
+    - S3 bucket for static files (private)
+    - CloudFront distribution with OAI
+    - Proper SPA routing (404 -> index.html)
+    """
+    
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)
+        
+        # Create S3 bucket for frontend (PRIVATE - CloudFront will access via OAI)
+        self.bucket = s3.Bucket(
+            self,
+            "FrontendBucket",
+            bucket_name=f"flirtdeck-frontend-{self.account}",
+            removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True,  # Delete objects when stack is destroyed
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,  # Keep bucket private
+            encryption=s3.BucketEncryption.S3_MANAGED
+        )
+        
+        # Create CloudFront Origin Access Identity (OAI)
+        # Allows CloudFront to access private S3 bucket
+        oai = cloudfront.OriginAccessIdentity(
+            self,
+            "OAI",
+            comment="OAI for FlirtDeck frontend bucket"
+        )
+        
+        # Grant CloudFront read access to S3 bucket
+        self.bucket.grant_read(oai)
+        
+        # Create CloudFront distribution
+        self.distribution = cloudfront.Distribution(
+            self,
+            "FrontendDistribution",
+            default_behavior=cloudfront.BehaviorOptions(
+                origin=origins.S3Origin(
+                    self.bucket,
+                    origin_access_identity=oai
+                ),
+                viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                allowed_methods=cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+                cached_methods=cloudfront.CachedMethods.CACHE_GET_HEAD_OPTIONS,
+            ),
+            default_root_object="index.html",
+            # SPA routing: redirect 404 to index.html
+            error_responses=[
+                cloudfront.ErrorResponse(
+                    http_status=404,
+                    response_http_status=200,
+                    response_page_path="/index.html",
+                    ttl=Duration.minutes(5)
+                ),
+                cloudfront.ErrorResponse(
+                    http_status=403,
+                    response_http_status=200,
+                    response_page_path="/index.html",
+                    ttl=Duration.minutes(5)
+                )
+            ]
+        )
+        
+        # Add tags
+        Tags.of(self).add("Project", "FlirtDeck")
+        Tags.of(self).add("Environment", "Production")
+        Tags.of(self).add("ManagedBy", "CDK")
+        
+        # Output CloudFront URL
+        CfnOutput(
+            self,
+            "CloudFrontURL",
+            value=f"https://{self.distribution.distribution_domain_name}",
+            description="CloudFront Distribution URL"
+        )
+        
+        CfnOutput(
+            self,
+            "DistributionId",
+            value=self.distribution.distribution_id,
+            description="CloudFront Distribution ID (for cache invalidation)"
+        )
+        
+        CfnOutput(
+            self,
+            "BucketName",
+            value=self.bucket.bucket_name,
+            description="S3 Bucket Name"
+        )
+```
+
+---
+
+#### **Step 2: Update app.py to Deploy Frontend Stack**
+
+Add to `backend/infrastructure/app.py`:
+```python
+from infrastructure.frontend_stack import FrontendStack
+
+# ... existing stacks ...
+
+# Deploy FrontendStack
+frontend_stack = FrontendStack(
+    app,
+    "FrontendStack",
+    env=env,
+    description="S3 + CloudFront for React frontend hosting"
+)
+```
+
+Deploy:
+```bash
+cd backend/infrastructure
+cdk deploy FrontendStack
+```
+
+**Save the outputs:**
+- CloudFront URL: `https://d2lobh4zu3vjy5.cloudfront.net`
+- Distribution ID: `E4W5I46G65HEP`
+- Bucket Name: `flirtdeck-frontend-811230534980`
+
+---
+
+#### **Step 3: Get Current API Gateway URL**
+
+The API Gateway URL changes when you redeploy the ApiStack. Get the current one:
+```bash
+aws apigateway get-rest-apis --query "items[?name=='flirtdeck-api'].id" --output text
+```
+
+This returns the API ID (e.g., `091jac1dyf`). The full URL is:
+```
+https://091jac1dyf.execute-api.us-west-2.amazonaws.com/prod
+```
+
+---
+
+#### **Step 4: Configure Production Environment Variables**
+
+Create `frontend/.env.production` with **EXACT** values:
+```bash
+# API Gateway URL (from Step 3)
+VITE_API_URL=https://091jac1dyf.execute-api.us-west-2.amazonaws.com/prod
+
+# Cognito Configuration
+VITE_COGNITO_DOMAIN=flirtdeck-kb-dev.auth.us-west-2.amazoncognito.com
+VITE_COGNITO_CLIENT_ID=1puj9dmekj2o76bv82p9sndp5k
+
+# CloudFront URL (from Step 2)
+VITE_COGNITO_REDIRECT_URI=https://d2lobh4zu3vjy5.cloudfront.net/auth/callback
+```
+
+**🚨 CRITICAL:** Variable names must match EXACTLY:
+- ✅ `VITE_COGNITO_REDIRECT_URI` 
+- ❌ NOT `VITE_REDIRECT_URI` (wrong!)
+
+Check your `AuthContext.tsx` uses: `import.meta.env.VITE_COGNITO_REDIRECT_URI`
+
+---
+
+#### **Step 5: Update API Gateway CORS for CloudFront**
+
+The API Gateway must allow requests from CloudFront. Update `backend/infrastructure/infrastructure/api_stack.py`:
+
+**Location 1: Default CORS (line ~126)**
+```python
+default_cors_preflight_options=apigw.CorsOptions(
+    allow_origins=[
+        "http://localhost:5173",
+        "https://d2lobh4zu3vjy5.cloudfront.net"  # Add CloudFront URL
+    ],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "X-Amz-Date",
+        "X-Api-Key",
+        "X-Amz-Security-Token",
+    ],
+    allow_credentials=True,
+),
+```
+
+**Location 2: /auth/token endpoint (line ~176)**
+```python
+# Create the token resource with explicit CORS
+token_resource = auth_resource.add_resource(
+    "token",
+    default_cors_preflight_options=apigw.CorsOptions(
+        allow_origins=[
+            "http://localhost:5173",
+            "https://d2lobh4zu3vjy5.cloudfront.net"
+        ],
+        allow_methods=["POST", "OPTIONS"],
+        allow_headers=[
+            "Content-Type",
+            "Authorization",
+            "X-Amz-Date",
+            "X-Api-Key",
+            "X-Amz-Security-Token",
+        ],
+        allow_credentials=True,
+    )
+)
+
+token_resource.add_method(
+    "POST",
+    apigw.LambdaIntegration(token_exchange_lambda),
+    authorization_type=apigw.AuthorizationType.NONE
+)
+```
+
+**Location 3 & 4:** Repeat for connection and usage resource CORS (~246, ~299)
+
+Deploy:
+```bash
+cdk deploy ApiStack
+```
+
+---
+
+#### **Step 6: Update Lambda Response Headers**
+
+Lambda functions must return CloudFront URL in CORS headers. Update `backend/shared/responses.py`:
+```python
+def success_response(data: Any, status_code: int = 200) -> Dict[str, Any]:
+    return {
+        "statusCode": status_code,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "https://d2lobh4zu3vjy5.cloudfront.net",
+            "Access-Control-Allow-Headers": "Content-Type,Authorization",
+            "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+            "Access-Control-Allow-Credentials": "true"
+        },
+        "body": json.dumps(data)
+    }
+
+def error_response(message: str, status_code: int = 400, error_code: Optional[str] = None) -> Dict[str, Any]:
+    # Same headers as above
+```
+
+Redeploy:
+```bash
+cdk deploy ApiStack
+```
+
+---
+
+#### **Step 7: Update Token Exchange Lambda**
+
+The `/auth/token` endpoint needs explicit CORS headers. Update `backend/lambda_functions/auth/token_exchange.py`:
+```python
+def handler(event, context):
+    # Add CORS headers to ALL responses
+    cors_headers = {
+        'Access-Control-Allow-Origin': 'https://d2lobh4zu3vjy5.cloudfront.net',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+        'Access-Control-Allow-Methods': 'POST,OPTIONS'
+    }
+    
+    try:
+        # ... token exchange logic ...
+        
+        result = success_response({...})
+        result['headers'].update(cors_headers)
+        return result
+    
+    except Exception as e:
+        response = error_response("Token exchange failed", status_code=401)
+        response['headers'].update(cors_headers)
+        return response
+```
+
+---
+
+#### **Step 8: Fix API Client for Public Endpoints**
+
+The `/auth/token` endpoint doesn't require authentication (it's how you GET tokens). Update `frontend/src/api/client.ts`:
+```typescript
+apiClient.interceptors.request.use(
+  (config) => {
+    // Skip token check for the token exchange endpoint
+    if (config.url?.includes('/auth/token')) {
+      return config;
+    }
+    
+    const token = localStorage.getItem('idToken');
+    
+    if (!token) {
+      console.log('No token found - redirecting to login');
+      localStorage.clear();
+      window.location.href = '/login';
+      return Promise.reject(new Error('No authentication token'));
+    }
+    
+    config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+```
+
+---
+
+#### **Step 9: Fix Callback Page Navigation**
+
+The callback page needs to wait for auth state to load before navigating. Update `frontend/src/pages/CallbackPage.tsx`:
+```typescript
+try {
+  const response = await apiClient.post('/auth/token', { code });
+  const { id_token, access_token, refresh_token } = response.data;
+
+  localStorage.setItem('idToken', id_token);
+  localStorage.setItem('accessToken', access_token);
+  if (refresh_token) {
+    localStorage.setItem('refreshToken', refresh_token);
+  }
+
+  await refreshUser();  // Wait for user data to load
+  
+  // Wait for AuthContext to update isAuthenticated
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Use full page navigation to ensure clean state
+  window.location.href = '/dashboard';
+  
+} catch (err: any) {
+  setError('Login failed: ' + (err.response?.data?.error || err.message));
+}
+```
+
+---
+
+#### **Step 10: Update Google OAuth Redirect URIs**
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Select your OAuth 2.0 Client ID
+3. Add to **Authorized redirect URIs:**
+```
+   https://d2lobh4zu3vjy5.cloudfront.net/auth/callback
+   https://flirtdeck-kb-dev.auth.us-west-2.amazoncognito.com/oauth2/idpresponse
+```
+4. Save
+
+---
+
+#### **Step 11: Update Cognito Callback URLs**
+```bash
+aws cognito-idp update-user-pool-client \
+  --user-pool-id us-west-2_XXXXXXXXX \
+  --client-id 1puj9dmekj2o76bv82p9sndp5k \
+  --callback-urls \
+    "http://localhost:5173/auth/callback" \
+    "https://d2lobh4zu3vjy5.cloudfront.net/auth/callback" \
+  --logout-urls \
+    "http://localhost:5173" \
+    "https://d2lobh4zu3vjy5.cloudfront.net"
+```
+
+---
+
+#### **Step 12: Build and Deploy Frontend**
+```bash
+cd frontend
+
+# Clean previous build
+rm -rf dist/
+
+# Build with production env vars
+NODE_ENV=production npm run build
+
+# Upload to S3
+aws s3 sync dist/ s3://flirtdeck-frontend-811230534980/ --delete
+
+# Invalidate CloudFront cache
+aws cloudfront create-invalidation \
+  --distribution-id E4W5I46G65HEP \
+  --paths "/*"
+```
+
+Wait 2-3 minutes for CloudFront invalidation to complete:
+```bash
+aws cloudfront get-invalidation \
+  --distribution-id E4W5I46G65HEP \
+  --id I4499HA8KWZ69RP613WMV31H1G \
+  --query "Invalidation.Status"
+```
+
+---
+
+#### **Verification Checklist**
+
+- [x] Visit `https://d2lobh4zu3vjy5.cloudfront.net` → Login page loads
+- [x] Click "Sign in with Google" → Redirects to Google
+- [x] After Google login → Redirects back to callback page
+- [x] Shows "Completing Sign In..." briefly
+- [x] Redirects to `/dashboard` automatically
+- [x] Dashboard shows your name and user info
+- [x] Can navigate to Questions, Connections pages
+- [x] Logout works and returns to login
+
+---
+
+#### **Common Issues & Solutions**
+
+**Issue 1: "Network Error" or "net::ERR_NAME_NOT_RESOLVED"**
+- **Cause:** API Gateway URL in `.env.production` is wrong
+- **Fix:** Get current API ID: `aws apigateway get-rest-apis --query "items[?name=='flirtdeck-api'].id" --output text`
+- Update `.env.production` and rebuild
+
+**Issue 2: CORS Error**
+- **Cause:** CloudFront URL not in API Gateway CORS settings
+- **Fix:** Update `api_stack.py` CORS (3 locations), redeploy ApiStack
+- Also update `responses.py` and `token_exchange.py`
+
+**Issue 3: Stuck on "Completing Sign In..."**
+- **Cause:** Navigation happens before auth state loads
+- **Fix:** Add 1-second delay and use `window.location.href` in CallbackPage
+
+**Issue 4: "Missing Authentication Token"**
+- **Cause:** Wrong API Gateway URL
+- **Fix:** Verify URL matches deployed API, rebuild frontend
+
+**Issue 5: Redirects back to login after callback**
+- **Cause:** `refreshUser()` not completing before navigation
+- **Fix:** Add `await` before `refreshUser()` and delay before navigation
+
+---
+
+#### **Future Deployment Process (Once Everything Works)**
+
+For subsequent deployments after Phase 7 is complete:
+```bash
+# 1. Update code
+# 2. Build and deploy frontend
+cd frontend
+rm -rf dist/
+NODE_ENV=production npm run build
+aws s3 sync dist/ s3://flirtdeck-frontend-811230534980/ --delete
+aws cloudfront create-invalidation --distribution-id E4W5I46G65HEP --paths "/*"
+
+# 3. If backend changed, deploy backend
+cd ../backend/infrastructure
+cdk deploy ApiStack  # or whichever stack changed
+```
+
+**That's it!** No OAuth updates, no CORS changes needed after initial setup.
+
+---
+
+**Checkpoint:** ✅ App is live and fully functional at CloudFront URL!
 
 ---
 

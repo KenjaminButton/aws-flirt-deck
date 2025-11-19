@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import apiClient, { clearAuth } from '../api/client';
 import type { User } from '../types';
 
@@ -54,7 +55,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = () => {
     const cognitoDomain = import.meta.env.VITE_COGNITO_DOMAIN;
     const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID;
-    const redirectUri = import.meta.env.VITE_REDIRECT_URI;
+    const redirectUri = import.meta.env.VITE_COGNITO_REDIRECT_URI;
     
     const oauthUrl = `https://${cognitoDomain}/oauth2/authorize?` +
       `response_type=code&` +

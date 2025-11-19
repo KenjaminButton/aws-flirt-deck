@@ -30,6 +30,7 @@ dist/
 build/
 .env
 .env.local
+.env.local.backup
 .env.production
 
 # IDE

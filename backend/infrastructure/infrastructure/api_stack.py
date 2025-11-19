@@ -36,6 +36,7 @@ class ApiStack(Stack):
         scope: Construct,
         construct_id: str,
         user_pool: cognito.IUserPool,
+        user_pool_client: cognito.IUserPoolClient,
         table_name: str,
         **kwargs,
     ) -> None:
@@ -43,7 +44,9 @@ class ApiStack(Stack):
 
         # Store references for use in Lambda functions
         self.user_pool = user_pool
+        self.user_pool_client = user_pool_client
         self.table_name = table_name
+        
 
         # Create Stripe Lambda Layer
         # This layer contains the Stripe Python library
@@ -122,7 +125,10 @@ class ApiStack(Stack):
                 throttling_burst_limit=200,
             ),
             default_cors_preflight_options=apigw.CorsOptions(
-                allow_origins=["http://localhost:5173"],
+                allow_origins=[
+                    "http://localhost:5173",
+                    "https://d2lobh4zu3vjy5.cloudfront.net"
+                ],
                 allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
                 allow_headers=[
                     "Content-Type",
@@ -144,6 +150,8 @@ class ApiStack(Stack):
             identity_source="method.request.header.Authorization",
         )
 
+
+
         # ==================== /auth ENDPOINTS ====================
         auth_resource = self.api.root.add_resource("auth")
 
@@ -159,6 +167,39 @@ class ApiStack(Stack):
             apigw.LambdaIntegration(get_me_lambda),
             authorizer=self.authorizer,
             authorization_type=apigw.AuthorizationType.COGNITO,
+        )
+
+        # POST /auth/token - Exchange authorization code for tokens (NO AUTH)
+        token_exchange_lambda = self.create_lambda_function(
+            function_id="TokenExchangeFunction",
+            handler_path="auth",
+            handler_file="token_exchange",
+            description="Exchange authorization code for tokens",
+        )
+
+        token_resource = auth_resource.add_resource(
+            "token",
+            default_cors_preflight_options=apigw.CorsOptions(
+                allow_origins=[
+                    "http://localhost:5173",
+                    "https://d2lobh4zu3vjy5.cloudfront.net"
+                ],
+                allow_methods=["POST", "OPTIONS"],
+                allow_headers=[
+                    "Content-Type",
+                    "Authorization",
+                    "X-Amz-Date",
+                    "X-Api-Key",
+                    "X-Amz-Security-Token",
+                ],
+                allow_credentials=True,
+            )
+        )
+
+        token_resource.add_method(  # ← Use token_resource, not auth_resource
+            "POST",
+            apigw.LambdaIntegration(token_exchange_lambda),
+            authorization_type=apigw.AuthorizationType.NONE
         )
 
         # ==================== /questions ENDPOINTS ====================
@@ -215,7 +256,10 @@ class ApiStack(Stack):
         connection_id_resource = connections_resource.add_resource(
             "{connection_id}",
             default_cors_preflight_options=apigw.CorsOptions(
-                allow_origins=["http://localhost:5173"],
+                allow_origins=[
+                    "http://localhost:5173",
+                    "https://d2lobh4zu3vjy5.cloudfront.net"
+                ],
                 allow_methods=["DELETE", "OPTIONS"],
                 allow_headers=[
                     "Content-Type",
@@ -279,7 +323,10 @@ class ApiStack(Stack):
         usage_id_resource = usage_resource.add_resource(
             "{usage_id}",
             default_cors_preflight_options=apigw.CorsOptions(
-                allow_origins=["http://localhost:5173"],
+                allow_origins=[
+                    "http://localhost:5173",
+                    "https://d2lobh4zu3vjy5.cloudfront.net"
+                ],
                 allow_methods=["GET", "PUT", "DELETE", "OPTIONS"],
                 allow_headers=[
                     "Content-Type",
@@ -400,5 +447,8 @@ class ApiStack(Stack):
             environment={
                 "TABLE_NAME": self.table_name,
                 "USER_POOL_ID": self.user_pool.user_pool_id,
+                "COGNITO_DOMAIN": "flirtdeck-kb-dev.auth.us-west-2.amazoncognito.com",
+                "COGNITO_CLIENT_ID": self.user_pool_client.user_pool_client_id,
+                "COGNITO_REDIRECT_URI": "https://d2lobh4zu3vjy5.cloudfront.net/auth/callback"
             },
         )

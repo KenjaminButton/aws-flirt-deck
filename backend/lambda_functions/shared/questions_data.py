@@ -1,26 +1,3 @@
-"""
-FlirtDeck Questions Database - TEST DATASET
-
-This file contains the master list of conversation starter questions.
-Currently contains 12 test questions (3 per category) for initial testing.
-
-Purpose:
-- Provides structured question data for seeding DynamoDB
-- Each question has: text, category, and unique ID
-- Will be expanded to 250+ questions in future update
-
-Categories:
-- life: Personal growth, goals, lifestyle
-- random: Fun, lighthearted, quirky topics  
-- deep: Philosophical, meaningful conversations
-- experiences: Stories, memories, adventures
-
-Usage:
-    from shared.questions_data import QUESTIONS
-    for q in QUESTIONS:
-        print(q['text'])
-"""
-
 from typing import List, Dict
 
 # Master questions list
