@@ -22,11 +22,15 @@ phases:
       - echo "Building Stripe Lambda layer..."
       - mkdir -p backend/layers/stripe/python
       - pip install stripe -t backend/layers/stripe/python/
-      - cd backend/layers/stripe && zip -r stripe-layer.zip python/ && cd $CODEBUILD_SRC_DIR
+      - echo "Current directory before zip:"
+      - pwd
+      - echo "Zipping Stripe layer..."
+      - cd backend/layers/stripe
+      - zip -r stripe-layer.zip python/
+      - echo "Returning to source directory..."
+      - cd $CODEBUILD_SRC_DIR
       - echo "Verifying Stripe layer was created..."
       - ls -la backend/layers/stripe/stripe-layer.zip
-      - echo "Current directory is:"
-      - pwd
       - echo "Synthesizing CDK stacks..."
       - cd backend/infrastructure
       - cdk synth
