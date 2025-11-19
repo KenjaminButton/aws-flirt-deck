@@ -1,11 +1,7 @@
 version: 0.2
 
-# This file defines the build steps for CodeBuild
-# Think of it as a script that runs inside the build container
-
 phases:
   install:
-    # Phase 1: Install required tools
     runtime-versions:
       python: 3.11
       nodejs: 18
@@ -15,19 +11,15 @@ phases:
       - echo "Installing Python dependencies..."
       - cd backend/infrastructure
       - pip install -r requirements.txt
+      - cd $CODEBUILD_SRC_DIR  # Go back to repo root after install
 
   build:
-    # Phase 2: Build assets and deploy infrastructure
     commands:
       - echo "Building Stripe Lambda layer..."
       - mkdir -p backend/layers/stripe/python
       - pip install stripe -t backend/layers/stripe/python/
-      - echo "Current directory before zip:"
-      - pwd
-      - echo "Zipping Stripe layer..."
       - cd backend/layers/stripe
       - zip -r stripe-layer.zip python/
-      - echo "Returning to source directory..."
       - cd $CODEBUILD_SRC_DIR
       - echo "Verifying Stripe layer was created..."
       - ls -la backend/layers/stripe/stripe-layer.zip
@@ -38,6 +30,5 @@ phases:
       - cdk deploy --all --require-approval never
 
   post_build:
-    # Phase 3: Cleanup and reporting
     commands:
       - echo "Build completed successfully!"
