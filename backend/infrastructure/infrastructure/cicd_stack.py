@@ -48,6 +48,17 @@ class CicdStack(Stack):
                 privileged=False  # Don't need Docker
             ),
             
+            # Environment variables for CDK deployment
+            # These are needed by CognitoStack during deployment
+            environment_variables={
+                "GOOGLE_CLIENT_ID": codebuild.BuildEnvironmentVariable(
+                    value=SecretValue.secrets_manager("google-oauth", json_field="client_id").unsafe_unwrap()
+                ),
+                "GOOGLE_CLIENT_SECRET": codebuild.BuildEnvironmentVariable(
+                    value=SecretValue.secrets_manager("google-oauth", json_field="client_secret").unsafe_unwrap()
+                )
+            },
+            
             # Build commands are defined in buildspec.yml (we'll create this next)
             build_spec=codebuild.BuildSpec.from_source_filename("buildspec.yml")
         )
@@ -71,6 +82,20 @@ class CicdStack(Stack):
             )
         )
         
+        # Policy #2: Grant CodeBuild permission to read secrets
+        build_project.add_to_role_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    "secretsmanager:GetSecretValue",
+                    "secretsmanager:DescribeSecret"
+                ],
+                resources=[
+                    f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:google-oauth-*"
+                ]
+            )
+        )
+
         # Step 2: Create the CodePipeline
         # This is the overall workflow manager
         pipeline = codepipeline.Pipeline(
