@@ -1,28 +1,3 @@
-/**
- * Login Page Component
- * 
- * BIG PICTURE:
- * This is the first page users see when they're not logged in.
- * It displays a simple "Sign in with Google" button that redirects
- * them to Cognito's hosted UI, which then redirects to Google OAuth.
- * 
- * FLOW:
- * 1. User visits app → Not logged in → Sees this page
- * 2. Clicks "Sign in with Google" button
- * 3. useAuth().login() constructs OAuth URL
- * 4. Browser redirects to Cognito → Google → User approves
- * 5. Google redirects back to our callback URL with authorization code
- * 6. CallbackPage handles the code and completes login
- * 
- * WHY SO SIMPLE:
- * This page is intentionally minimal because the real work happens
- * in the OAuth flow and callback. This is just the entry point.
- * 
- * ANALOGY:
- * This is like the "Please show your ID" sign at a club entrance.
- * The actual ID checking happens elsewhere (CallbackPage).
- */
-
 import { useAuth } from '../../context/AuthContext';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 

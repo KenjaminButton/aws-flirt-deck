@@ -25,13 +25,13 @@ jobs:
         run: cd frontend && npm ci
       
       - name: Build frontend
-        run: cd frontend && npm run build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_COGNITO_DOMAIN: ${{ secrets.VITE_COGNITO_DOMAIN }}
           VITE_COGNITO_CLIENT_ID: ${{ secrets.VITE_COGNITO_CLIENT_ID }}
           VITE_COGNITO_REDIRECT_URI: ${{ secrets.VITE_COGNITO_REDIRECT_URI }}
           VITE_COGNITO_LOGOUT_URI: ${{ secrets.VITE_COGNITO_LOGOUT_URI }}
+        run: cd frontend && npm run build
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
