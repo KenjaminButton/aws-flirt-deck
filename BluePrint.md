@@ -2250,39 +2250,132 @@ The 5-hour debugging session, while frustrating, taught valuable lessons about:
 
 ---
 
-#### Day 24: Frontend CI/CD
+# PHASE 9: Frontend CI/CD - COMPLETE ✅
 
-**Tasks:**
-- [ ] Create `.github/workflows/frontend-deploy.yml`:
+## What We Built
+- GitHub Actions workflow that auto-deploys frontend on push to main
+- Deploy time: ~2-3 minutes
+- Live site: https://d2lobh4zu3vjy5.cloudfront.net
+
+## Tasks Completed
+- [x] Created `.github/workflows/frontend-deploy.yml`
+- [x] Added 7 GitHub Secrets (AWS creds + 5 Vite env vars)
+- [x] Verified IAM user permissions (PowerUserAccess)
+- [x] Tested full deployment pipeline
+
+## The Big Problem: Environment Variables = undefined
+
+**Issue:** Login redirected to `https://undefined/oauth2/authorize...`
+
+**Root Cause:** Vite needs env vars at BUILD time, not runtime. GitHub Action was building without them.
+
+**The Fix:**
 ```yaml
-  name: Deploy Frontend
-  on:
-    push:
-      branches: [main]
-      paths: ['frontend/**']
-  jobs:
-    deploy:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v3
-        - uses: actions/setup-node@v3
-        - run: cd frontend && npm install
-        - run: cd frontend && npm run build
-        - uses: aws-actions/configure-aws-credentials@v2
-        - run: aws s3 sync frontend/dist/ s3://BUCKET/ --delete
-        - run: aws cloudfront create-invalidation --distribution-id ID --paths "/*"
+- name: Build frontend
+  env:                    # ← Add this block BEFORE run:
+    VITE_API_URL: ${{ secrets.VITE_API_URL }}
+    VITE_COGNITO_DOMAIN: ${{ secrets.VITE_COGNITO_DOMAIN }}
+    VITE_COGNITO_CLIENT_ID: ${{ secrets.VITE_COGNITO_CLIENT_ID }}
+    VITE_COGNITO_REDIRECT_URI: ${{ secrets.VITE_COGNITO_REDIRECT_URI }}
+    VITE_COGNITO_LOGOUT_URI: ${{ secrets.VITE_COGNITO_LOGOUT_URI }}
+  run: cd frontend && npm run build
 ```
-- [ ] Add GitHub secrets:
-  - `AWS_ACCESS_KEY_ID`
-  - `AWS_SECRET_ACCESS_KEY`
-- [ ] Test: Push frontend change → GitHub Action runs → Deployed to S3
 
-**Verification:**
-- [ ] Push frontend code change
-- [ ] GitHub Action succeeds
-- [ ] Visit CloudFront URL → Changes live
+## Workflow File
 
-**Checkpoint:** Full CI/CD working. Any push to main auto-deploys!
+**Location:** `.github/workflows/frontend-deploy.yml`
+
+```yaml
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+    paths: ['frontend/**']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - run: cd frontend && npm ci
+      
+      - name: Build frontend
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_COGNITO_DOMAIN: ${{ secrets.VITE_COGNITO_DOMAIN }}
+          VITE_COGNITO_CLIENT_ID: ${{ secrets.VITE_COGNITO_CLIENT_ID }}
+          VITE_COGNITO_REDIRECT_URI: ${{ secrets.VITE_COGNITO_REDIRECT_URI }}
+          VITE_COGNITO_LOGOUT_URI: ${{ secrets.VITE_COGNITO_LOGOUT_URI }}
+        run: cd frontend && npm run build
+      
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+      
+      - run: aws s3 sync frontend/dist/ s3://flirtdeck-frontend-811230534980 --delete
+      
+      - run: aws cloudfront create-invalidation --distribution-id E4W5I46G65HEP --paths "/*"
+```
+
+## GitHub Secrets Added
+1. `AWS_ACCESS_KEY_ID`
+2. `AWS_SECRET_ACCESS_KEY`
+3. `VITE_API_URL`
+4. `VITE_COGNITO_DOMAIN`
+5. `VITE_COGNITO_CLIENT_ID`
+6. `VITE_COGNITO_REDIRECT_URI`
+7. `VITE_COGNITO_LOGOUT_URI`
+
+**Note:** Frontend env vars aren't "secret" - they're compiled into public JavaScript. Using GitHub Secrets just centralizes config.
+
+## How to Deploy
+```bash
+# Make frontend change
+cd frontend
+echo "// New feature" >> src/App.tsx
+
+# Push to main
+git add .
+git commit -m "feat: New feature"
+git push origin main
+
+# Watch at: https://github.com/YOUR_REPO/actions
+# Live in ~3 minutes
+```
+
+## Quick Troubleshooting
+
+**Problem:** Env vars still undefined
+- Check GitHub Secrets are set (exact names, case-sensitive)
+- Verify `env:` block is BEFORE `run:` in workflow
+- Check build logs for env var values
+
+**Problem:** Workflow doesn't trigger
+- Only triggers on frontend/** changes
+- Check `git diff HEAD~1 --name-only`
+
+**Problem:** Old content still showing
+- Wait for CloudFront invalidation (~60 seconds)
+- Hard refresh browser (Cmd+Shift+R)
+
+## Key Learnings
+- Vite env vars work at BUILD time, not runtime
+- `import.meta.env.VITE_*` gets replaced during `npm run build`
+- YAML indentation matters (`env:` at same level as `run:`)
+- Frontend env vars are public by design (visible in browser DevTools)
+
+## Status: COMPLETE ✅
+Time: 2 hours | Cost: ~$0.02/month | Deploy time: 2-3 minutes
 
 ---
 
