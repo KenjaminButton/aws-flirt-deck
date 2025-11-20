@@ -1,0 +1,319 @@
+Description: CI/CD pipeline for automated FlirtDeck backend deployments
+Resources:
+  FlirtDeckBuildRoleB6378520:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/AdministratorAccess
+    Metadata:
+      aws:cdk:path: CicdStack/FlirtDeckBuildRole/Resource
+  FlirtDeckBuildRoleDefaultPolicyF6C869B5:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - ssm:GetParameter
+              - ssm:GetParameters
+            Effect: Allow
+            Resource: arn:aws:ssm:us-west-2:811230534980:parameter/cdk-bootstrap/*
+          - Action: secretsmanager:GetSecretValue
+            Effect: Allow
+            Resource:
+              - arn:aws:secretsmanager:us-west-2:811230534980:secret:google-oauth-*
+              - arn:aws:secretsmanager:us-west-2:811230534980:secret:google-oauth-client-id-??????
+              - arn:aws:secretsmanager:us-west-2:811230534980:secret:google-oauth-client-secret-??????
+          - Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Effect: Allow
+            Resource:
+              - Fn::Join:
+                  - ""
+                  - - arn:aws:logs:us-west-2:811230534980:log-group:/aws/codebuild/
+                    - Ref: FlirtDeckBuildProject35021B73
+                    - :*
+              - Fn::Join:
+                  - ""
+                  - - arn:aws:logs:us-west-2:811230534980:log-group:/aws/codebuild/
+                    - Ref: FlirtDeckBuildProject35021B73
+          - Action:
+              - codebuild:BatchPutCodeCoverages
+              - codebuild:BatchPutTestCases
+              - codebuild:CreateReport
+              - codebuild:CreateReportGroup
+              - codebuild:UpdateReport
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - arn:aws:codebuild:us-west-2:811230534980:report-group/
+                  - Ref: FlirtDeckBuildProject35021B73
+                  - -*
+          - Action:
+              - s3:Abort*
+              - s3:DeleteObject*
+              - s3:GetBucket*
+              - s3:GetObject*
+              - s3:List*
+              - s3:PutObject
+              - s3:PutObjectLegalHold
+              - s3:PutObjectRetention
+              - s3:PutObjectTagging
+              - s3:PutObjectVersionTagging
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - FlirtDeckPipelineArtifactsBucket0DB14C60
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - FlirtDeckPipelineArtifactsBucket0DB14C60
+                        - Arn
+                    - /*
+        Version: "2012-10-17"
+      PolicyName: FlirtDeckBuildRoleDefaultPolicyF6C869B5
+      Roles:
+        - Ref: FlirtDeckBuildRoleB6378520
+    Metadata:
+      aws:cdk:path: CicdStack/FlirtDeckBuildRole/DefaultPolicy/Resource
+  FlirtDeckBuildProject35021B73:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Cache:
+        Type: NO_CACHE
+      EncryptionKey: alias/aws/s3
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: GOOGLE_CLIENT_ID
+            Type: SECRETS_MANAGER
+            Value: google-oauth-client-id
+          - Name: GOOGLE_CLIENT_SECRET
+            Type: SECRETS_MANAGER
+            Value: google-oauth-client-secret
+        Image: aws/codebuild/standard:7.0
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: false
+        Type: LINUX_CONTAINER
+      ServiceRole:
+        Fn::GetAtt:
+          - FlirtDeckBuildRoleB6378520
+          - Arn
+      Source:
+        BuildSpec: buildspec.yml
+        Type: CODEPIPELINE
+    Metadata:
+      aws:cdk:path: CicdStack/FlirtDeckBuildProject/Resource
+  FlirtDeckPipelineArtifactsBucket0DB14C60:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CicdStack/FlirtDeckPipeline/ArtifactsBucket/Resource
+  FlirtDeckPipelineArtifactsBucketPolicy644111E0:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: FlirtDeckPipelineArtifactsBucket0DB14C60
+      PolicyDocument:
+        Statement:
+          - Action: s3:*
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+            Effect: Deny
+            Principal:
+              AWS: "*"
+            Resource:
+              - Fn::GetAtt:
+                  - FlirtDeckPipelineArtifactsBucket0DB14C60
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - FlirtDeckPipelineArtifactsBucket0DB14C60
+                        - Arn
+                    - /*
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: CicdStack/FlirtDeckPipeline/ArtifactsBucket/Policy/Resource
+  FlirtDeckPipelineRoleF2C267E4:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: CicdStack/FlirtDeckPipeline/Role/Resource
+  FlirtDeckPipelineRoleDefaultPolicy473137D9:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:Abort*
+              - s3:DeleteObject*
+              - s3:GetBucket*
+              - s3:GetObject*
+              - s3:List*
+              - s3:PutObject
+              - s3:PutObjectLegalHold
+              - s3:PutObjectRetention
+              - s3:PutObjectTagging
+              - s3:PutObjectVersionTagging
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - FlirtDeckPipelineArtifactsBucket0DB14C60
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - FlirtDeckPipelineArtifactsBucket0DB14C60
+                        - Arn
+                    - /*
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - FlirtDeckPipelineBuildCDKDeployCodePipelineActionRoleA2010966
+                - Arn
+        Version: "2012-10-17"
+      PolicyName: FlirtDeckPipelineRoleDefaultPolicy473137D9
+      Roles:
+        - Ref: FlirtDeckPipelineRoleF2C267E4
+    Metadata:
+      aws:cdk:path: CicdStack/FlirtDeckPipeline/Role/DefaultPolicy/Resource
+  FlirtDeckPipeline6B90C27D:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location:
+          Ref: FlirtDeckPipelineArtifactsBucket0DB14C60
+        Type: S3
+      Name: flirtdeck-backend-pipeline
+      PipelineType: V2
+      RoleArn:
+        Fn::GetAtt:
+          - FlirtDeckPipelineRoleF2C267E4
+          - Arn
+      Stages:
+        - Actions:
+            - ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: "1"
+              Configuration:
+                Owner: KenjaminButton
+                Repo: aws-flirt-deck
+                Branch: main
+                OAuthToken: "{{resolve:secretsmanager:github-token:SecretString:::}}"
+                PollForSourceChanges: false
+              Name: GitHub_Source
+              OutputArtifacts:
+                - Name: SourceOutput
+              RunOrder: 1
+          Name: Source
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              Configuration:
+                ProjectName:
+                  Ref: FlirtDeckBuildProject35021B73
+              InputArtifacts:
+                - Name: SourceOutput
+              Name: CDK_Deploy
+              OutputArtifacts:
+                - Name: BuildOutput
+              RoleArn:
+                Fn::GetAtt:
+                  - FlirtDeckPipelineBuildCDKDeployCodePipelineActionRoleA2010966
+                  - Arn
+              RunOrder: 1
+          Name: Build
+    DependsOn:
+      - FlirtDeckPipelineRoleDefaultPolicy473137D9
+      - FlirtDeckPipelineRoleF2C267E4
+    Metadata:
+      aws:cdk:path: CicdStack/FlirtDeckPipeline/Resource
+  FlirtDeckPipelineBuildCDKDeployCodePipelineActionRoleA2010966:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              AWS:
+                Fn::GetAtt:
+                  - FlirtDeckPipelineRoleF2C267E4
+                  - Arn
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: CicdStack/FlirtDeckPipeline/Build/CDK_Deploy/CodePipelineActionRole/Resource
+  FlirtDeckPipelineBuildCDKDeployCodePipelineActionRoleDefaultPolicyF1F66E3E:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+              - codebuild:StopBuild
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - FlirtDeckBuildProject35021B73
+                - Arn
+        Version: "2012-10-17"
+      PolicyName: FlirtDeckPipelineBuildCDKDeployCodePipelineActionRoleDefaultPolicyF1F66E3E
+      Roles:
+        - Ref: FlirtDeckPipelineBuildCDKDeployCodePipelineActionRoleA2010966
+    Metadata:
+      aws:cdk:path: CicdStack/FlirtDeckPipeline/Build/CDK_Deploy/CodePipelineActionRole/DefaultPolicy/Resource
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Analytics: v2:deflate64:H4sIAAAAAAAA/8VVyU7DMBD9FnxEbtgvvYVFCLGoarkhhBx7KKaJHdkOKIry70xspw2rEKtUKfF7b2be2B1nO9ne2ks219ijHXGxGOUyS5qZY3xBEbppJCuSZqpzuGoIs7YqQOzXZNyQ0kjFZcnylHNdKUfGZJ3QqOkCUu6kVh5uKSmYYnMQE51LLsGSMeYbYnVqova6pVhKiEsdiE46BPu6r1iHru9OVC4VLDlM+AnyC8X+i/3GERhELlgBcf3b+/nzLXTRc8OUS5f0oKpnwpp+52S/1vY1PbhVnSMacG+jD7jUL7y+BwuBo+egAOXsM8N/C/+295/K7zc97HdLuRaQVTIXSTORJfgjMvoeuEMt9b+gD2AIKKNyFYP3Ug8uh4US6/CmCreWfx1QzP9DBy1/LBg0M4c3En5GEPqILltqd5Jmv+ILwE5J5l8G5UFxU5edhVOoX2EInJ7Pbs7Ti/T46NBTt9pwmM3OyNiZCijJcs0XkyrDbcYpBWtjEgOFflgNEK4dk4oEd8EPDY84Er252MZKFo+wpVOwusLq/RDHQZ7U7k6rjZ1kaxc/VfdWypHBy0IWkEzD8wlrRSjlxwYAAA==
+    Metadata:
+      aws:cdk:path: CicdStack/CDKMetadata/Default
+Parameters:
+  BootstrapVersion:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /cdk-bootstrap/hnb659fds/version
+    Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
+
