@@ -11,7 +11,7 @@ phases:
       - echo "Installing Python dependencies..."
       - cd backend/infrastructure
       - pip install -r requirements.txt
-      - cd $CODEBUILD_SRC_DIR  # Go back to repo root after install
+      - cd $CODEBUILD_SRC_DIR
 
   build:
     commands:
@@ -23,6 +23,12 @@ phases:
       - cd $CODEBUILD_SRC_DIR
       - echo "Verifying Stripe layer was created..."
       - ls -la backend/layers/stripe/stripe-layer.zip
+      
+      # ✅ CRITICAL FIX: Export environment variables for CDK
+      - echo "Exporting Google OAuth credentials..."
+      - export GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+      - export GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+      
       - echo "Synthesizing CDK stacks..."
       - cd backend/infrastructure
       - cdk synth
