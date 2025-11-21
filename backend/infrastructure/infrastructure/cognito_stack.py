@@ -131,9 +131,9 @@ class CognitoStack(Stack):
                 # localhost for local development
                 # Will add CloudFront URL later when we deploy frontend
                 callback_urls=[
-                    "http://localhost:3000",
-                    "http://localhost:3000/callback",
-                    "http://localhost:3000/auth/callback",  
+                    "http://localhost:5173",
+                    "http://localhost:5173/callback",
+                    "http://localhost:5173/auth/callback",  
                     "https://flirtdecks.com",
                     "https://flirtdecks.com/callback",
                     "https://flirtdecks.com/auth/callback", 
@@ -144,7 +144,7 @@ class CognitoStack(Stack):
                 
                 # Logout URLs: Where Cognito redirects after logout
                 logout_urls=[
-                    "http://localhost:3000",
+                    "http://localhost:5173",
                     "https://flirtdecks.com",
                     "https://www.flirtdecks.com"
                 ]

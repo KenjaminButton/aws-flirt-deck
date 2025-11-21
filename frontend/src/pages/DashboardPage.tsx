@@ -25,7 +25,7 @@ const DashboardPage = () => {
             Welcome back{user.name ? `, ${user.name.split(' ')[0]}` : ''}! 👋
           </h2>
           <p className="text-gray-600">
-            Here's your FlirtDeck dashboard
+            Here's your 💕FlirtDecks dashboard
           </p>
         </div>
         

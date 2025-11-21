@@ -23,11 +23,11 @@ def handler(event, context):
         
         if not code:
             return error_response("Missing authorization code", status_code=400, event=event)
-        
+                
         cognito_domain = os.environ.get('COGNITO_DOMAIN')
         client_id = os.environ.get('COGNITO_CLIENT_ID')
-        redirect_uri = os.environ.get('COGNITO_REDIRECT_URI')
-        
+        redirect_uri = body.get('redirect_uri')
+
         token_url = f"https://{cognito_domain}/oauth2/token"
         
         data = {

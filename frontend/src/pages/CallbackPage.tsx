@@ -39,7 +39,10 @@ useEffect(() => {
 
     try {
       console.log('Calling /auth/token endpoint...');
-      const response = await apiClient.post('/auth/token', { code });
+      const response = await apiClient.post('/auth/token', { 
+        code,
+        redirect_uri: import.meta.env.VITE_COGNITO_REDIRECT_URI 
+      });
       console.log('Token response:', response.data);
       
       const { id_token, access_token, refresh_token } = response.data;

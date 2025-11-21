@@ -14,7 +14,7 @@ const Footer = () => {
           {/* Left: Branding */}
           <div className="text-center md:text-left">
             <p className="text-gray-600 text-sm">
-              💕 <span className="font-semibold">FlirtDeck</span> - Keep the conversation flowing
+              💕 <span className="font-semibold">FlirtDecks</span> - Keep the conversation flowing
             </p>
           </div>
 
@@ -34,7 +34,7 @@ const Footer = () => {
           {/* Right: Copyright */}
           <div className="text-center md:text-right">
             <p className="text-gray-500 text-xs">
-              © {new Date().getFullYear()} FlirtDeck. All rights reserved.
+              © {new Date().getFullYear()} 💕FlirtDecks. All rights reserved.
             </p>
           </div>
         </div>

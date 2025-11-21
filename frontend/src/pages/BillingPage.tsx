@@ -193,13 +193,6 @@ const BillingPage = () => {
             )}
           </div>
         </div>
-
-        {/* Info Notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-          <p className="text-sm text-blue-800">
-            💡 <strong>Phase 6 Preview:</strong> Stripe integration coming soon for secure payments and subscription management.
-          </p>
-        </div>
       </div>
     </div>
   );
