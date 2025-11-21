@@ -1,8 +1,5 @@
 """
 DELETE /connections/{connection_id} Lambda Handler
-
-Deletes a connection for the authenticated user.
-After deleting, user can create a new connection if they were at the limit.
 """
 
 import json
@@ -13,16 +10,7 @@ from shared.dynamodb import table
 
 
 def get_connection(user_id: str, connection_id: str) -> Optional[Dict[str, Any]]:
-    """
-    Get a specific connection to verify ownership.
-    
-    Args:
-        user_id: Cognito user ID
-        connection_id: Connection UUID
-        
-    Returns:
-        Connection object if found and owned by user, None otherwise
-    """
+    """Get a specific connection to verify ownership."""
     try:
         response = table.get_item(
             Key={
@@ -39,16 +27,7 @@ def get_connection(user_id: str, connection_id: str) -> Optional[Dict[str, Any]]
 
 
 def delete_connection(user_id: str, connection_id: str) -> bool:
-    """
-    Delete a connection from DynamoDB.
-    
-    Args:
-        user_id: Cognito user ID
-        connection_id: Connection UUID
-        
-    Returns:
-        True if deleted successfully
-    """
+    """Delete a connection from DynamoDB."""
     try:
         table.delete_item(
             Key={
@@ -64,17 +43,7 @@ def delete_connection(user_id: str, connection_id: str) -> bool:
 
 
 def handler(event, context):
-    """
-    Lambda handler for DELETE /connections/{connection_id}
-    
-    Path Parameters:
-        connection_id: UUID of connection to delete
-    
-    Response:
-        204: No content (success)
-        404: Connection not found
-        500: Internal server error
-    """
+    """Lambda handler for DELETE /connections/{connection_id}"""
     
     print(f"Received event: {json.dumps(event)}")
     
@@ -88,7 +57,8 @@ def handler(event, context):
             return error_response(
                 "Missing user ID in token",
                 status_code=401,
-                error_code="INVALID_TOKEN"
+                error_code="INVALID_TOKEN",
+                event=event
             )
         
         # Get connection_id from path parameters
@@ -99,7 +69,8 @@ def handler(event, context):
             return error_response(
                 "Missing connection_id in path",
                 status_code=400,
-                error_code="MISSING_CONNECTION_ID"
+                error_code="MISSING_CONNECTION_ID",
+                event=event
             )
         
         # Verify connection exists and belongs to user
@@ -110,20 +81,22 @@ def handler(event, context):
             return error_response(
                 "Connection not found",
                 status_code=404,
-                error_code="CONNECTION_NOT_FOUND"
+                error_code="CONNECTION_NOT_FOUND",
+                event=event
             )
         
         # Delete the connection
         print(f"Deleting connection {connection_id} for user {user_id}")
         delete_connection(user_id, connection_id)
         
-        # Return success with empty object (204 would be better but causes CORS issues)
-        return success_response({"message": "Connection deleted successfully"})
+        # Return success with empty object
+        return success_response({"message": "Connection deleted successfully"}, event=event)
     
     except Exception as e:
         print(f"Error in delete handler: {str(e)}")
         return error_response(
             "Internal server error",
             status_code=500,
-            error_code="INTERNAL_ERROR"
+            error_code="INTERNAL_ERROR",
+            event=event
         )

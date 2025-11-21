@@ -1,3 +1,4 @@
+# Force redeploy - updated CORS headers v3
 """
 POST /auth/token Lambda Handler
 Exchanges authorization code for tokens after OAuth redirect.
@@ -15,22 +16,13 @@ from shared.responses import success_response, error_response
 
 
 def handler(event, context):
-
-    cors_headers = {
-        'Access-Control-Allow-Origin': 'https://d2lobh4zu3vjy5.cloudfront.net',
-        'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-        'Access-Control-Allow-Methods': 'POST,OPTIONS'
-    }
     
     try:
         body = json.loads(event.get('body', '{}'))
         code = body.get('code')
         
         if not code:
-            response = error_response("Missing authorization code", status_code=400)
-            response['headers'].update(cors_headers)
-            return response
+            return error_response("Missing authorization code", status_code=400, event=event)
         
         cognito_domain = os.environ.get('COGNITO_DOMAIN')
         client_id = os.environ.get('COGNITO_CLIENT_ID')
@@ -51,16 +43,12 @@ def handler(event, context):
         
         with urllib.request.urlopen(req) as response:
             response_data = json.loads(response.read().decode('utf-8'))
-            result = success_response({
+            return success_response({
                 'id_token': response_data.get('id_token'),
                 'access_token': response_data.get('access_token'),
                 'refresh_token': response_data.get('refresh_token')
-            })
-            result['headers'].update(cors_headers)
-            return result
+            }, event=event)
     
     except Exception as e:
         print(f"Token exchange error: {str(e)}")
-        response = error_response("Token exchange failed", status_code=401)
-        response['headers'].update(cors_headers)
-        return response
+        return error_response("Token exchange failed", status_code=401, event=event)

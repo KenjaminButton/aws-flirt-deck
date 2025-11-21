@@ -60,14 +60,14 @@ def handler(event, context):
         user_id = claims.get('sub')
         
         if not user_id:
-            return error_response("Unauthorized", 401, "UNAUTHORIZED")
+            return error_response("Unauthorized", 401, "UNAUTHORIZED", event=event)
         
         # Get connection_id from path
         path_params = event.get('pathParameters', {})
         connection_id = path_params.get('connection_id')
         
         if not connection_id:
-            return error_response("Missing connection_id", 400, "MISSING_PARAMETER")
+            return error_response("Missing connection_id", 400, "MISSING_PARAMETER", event=event)
         
         # Verify connection belongs to user
         connection = table.get_item(
@@ -78,7 +78,7 @@ def handler(event, context):
         ).get('Item')
         
         if not connection:
-            return error_response("Connection not found", 404, "NOT_FOUND")
+            return error_response("Connection not found", 404, "NOT_FOUND", event=event)
         
         # Get all usage records for this connection
         usage_records = get_connection_usage(user_id, connection_id)
@@ -86,9 +86,8 @@ def handler(event, context):
         # Clean and return
         clean_records = [clean_usage_for_response(u) for u in usage_records]
         
-        return success_response(clean_records)
+        return success_response(clean_records, event=event)
     
     except Exception as e:
         print(f"Error: {str(e)}")
-        return error_response("Internal server error", 500, "INTERNAL_ERROR")
-    
+        return error_response("Internal server error", 500, "INTERNAL_ERROR", event=event)

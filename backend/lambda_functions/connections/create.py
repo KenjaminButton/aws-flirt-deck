@@ -1,21 +1,5 @@
 """
 POST /connections Lambda Handler
-
-Creates a new connection (conversation partner) for the user.
-Enforces free tier limit: free users can only have 1 connection.
-
-Flow:
-1. Extract name from request body
-2. Get user_id from JWT token (via authorizer)
-3. Check subscription status from DynamoDB
-4. If free tier: count existing connections
-5. If at limit: return 403 error (paywall)
-6. Create connection in DynamoDB
-7. Return connection object
-
-Think of this like a contact list:
-- Free users: 1 contact max
-- Premium users: unlimited contacts
 """
 
 import json
@@ -28,15 +12,7 @@ from shared.dynamodb import table
 
 
 def get_user_subscription_status(user_id: str) -> str:
-    """
-    Get user's subscription status from their profile.
-    
-    Args:
-        user_id: Cognito user ID
-        
-    Returns:
-        Subscription status: 'free' or 'premium'
-    """
+    """Get user's subscription status from their profile."""
     try:
         response = table.get_item(
             Key={
@@ -47,29 +23,17 @@ def get_user_subscription_status(user_id: str) -> str:
         
         item = response.get('Item')
         if not item:
-            return 'free'  # Default to free if profile doesn't exist
+            return 'free'
         
         return item.get('subscription_status', 'free')
     
     except Exception as e:
         print(f"Error getting subscription status: {str(e)}")
-        return 'free'  # Fail closed - default to free
+        return 'free'
 
 
 def count_user_connections(user_id: str) -> int:
-    """
-    Count how many connections a user has.
-    
-    Args:
-        user_id: Cognito user ID
-        
-    Returns:
-        Number of connections
-        
-    Query pattern:
-        PK = USER#{user_id}
-        SK begins_with CONNECTION#
-    """
+    """Count how many connections a user has."""
     try:
         response = table.query(
             KeyConditionExpression='PK = :pk AND begins_with(SK, :sk_prefix)',
@@ -87,23 +51,7 @@ def count_user_connections(user_id: str) -> int:
 
 
 def create_connection(user_id: str, name: str) -> Dict[str, Any]:
-    """
-    Create a new connection in DynamoDB.
-    
-    Args:
-        user_id: Cognito user ID
-        name: Connection name (e.g., "Sarah from Hinge")
-        
-    Returns:
-        Created connection object
-        
-    DynamoDB item structure:
-        PK: USER#{user_id}
-        SK: CONNECTION#{connection_id}
-        connection_id: UUID
-        name: Connection name
-        created_at: ISO timestamp
-    """
+    """Create a new connection in DynamoDB."""
     connection_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat()
     
@@ -115,7 +63,6 @@ def create_connection(user_id: str, name: str) -> Dict[str, Any]:
         'created_at': timestamp,
         'updated_at': timestamp,
         
-        # GSI1 for querying all connections by user
         'GSI1PK': f'USER#{user_id}',
         'GSI1SK': f'CONNECTION#{timestamp}'
     }
@@ -130,15 +77,7 @@ def create_connection(user_id: str, name: str) -> Dict[str, Any]:
 
 
 def clean_connection_for_response(connection: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Remove DynamoDB internal fields before sending to frontend.
-    
-    Args:
-        connection: Raw DynamoDB item
-        
-    Returns:
-        Cleaned connection object
-    """
+    """Remove DynamoDB internal fields before sending to frontend."""
     return {
         'id': connection['connection_id'],
         'name': connection['name'],
@@ -147,20 +86,7 @@ def clean_connection_for_response(connection: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def handler(event, context):
-    """
-    Lambda handler for POST /connections endpoint
-    
-    Request Body:
-        {
-            "name": "Sarah from Hinge"
-        }
-    
-    Response:
-        201: {"id": "uuid", "name": "Sarah from Hinge", "created_at": "2024-01-15"}
-        400: {"error": "Missing name"}
-        403: {"error": "Free tier limit reached. Upgrade to Premium."}
-        500: {"error": "Internal server error"}
-    """
+    """Lambda handler for POST /connections endpoint"""
     
     print(f"Received event: {json.dumps(event)}")
     
@@ -174,7 +100,8 @@ def handler(event, context):
             return error_response(
                 "Missing user ID in token",
                 status_code=401,
-                error_code="INVALID_TOKEN"
+                error_code="INVALID_TOKEN",
+                event=event
             )
         
         # Parse request body
@@ -184,7 +111,8 @@ def handler(event, context):
             return error_response(
                 "Invalid JSON in request body",
                 status_code=400,
-                error_code="INVALID_JSON"
+                error_code="INVALID_JSON",
+                event=event
             )
         
         name = body.get('name', '').strip()
@@ -194,14 +122,16 @@ def handler(event, context):
             return error_response(
                 "Missing 'name' field",
                 status_code=400,
-                error_code="MISSING_NAME"
+                error_code="MISSING_NAME",
+                event=event
             )
         
         if len(name) > 100:
             return error_response(
                 "Name too long (max 100 characters)",
                 status_code=400,
-                error_code="NAME_TOO_LONG"
+                error_code="NAME_TOO_LONG",
+                event=event
             )
         
         # Check subscription status
@@ -219,7 +149,8 @@ def handler(event, context):
                 return error_response(
                     "Free tier limit reached. Upgrade to Premium for unlimited connections.",
                     status_code=403,
-                    error_code="FREE_TIER_LIMIT"
+                    error_code="FREE_TIER_LIMIT",
+                    event=event
                 )
         
         # Create connection
@@ -229,12 +160,13 @@ def handler(event, context):
         # Clean and return
         clean_connection = clean_connection_for_response(connection)
         
-        return success_response(clean_connection, status_code=201)
+        return success_response(clean_connection, status_code=201, event=event)
     
     except Exception as e:
         print(f"Error in create handler: {str(e)}")
         return error_response(
             "Internal server error",
             status_code=500,
-            error_code="INTERNAL_ERROR"
+            error_code="INTERNAL_ERROR",
+            event=event
         )

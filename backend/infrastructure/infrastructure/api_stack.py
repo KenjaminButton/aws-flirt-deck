@@ -127,7 +127,9 @@ class ApiStack(Stack):
             default_cors_preflight_options=apigw.CorsOptions(
                 allow_origins=[
                     "http://localhost:5173",
-                    "https://d2lobh4zu3vjy5.cloudfront.net"
+                    "http://localhost:3000",
+                    "https://flirtdecks.com",
+                    "https://www.flirtdecks.com"
                 ],
                 allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
                 allow_headers=[
@@ -182,7 +184,7 @@ class ApiStack(Stack):
             default_cors_preflight_options=apigw.CorsOptions(
                 allow_origins=[
                     "http://localhost:5173",
-                    "https://d2lobh4zu3vjy5.cloudfront.net"
+                    "https://flirtdecks.com"
                 ],
                 allow_methods=["POST", "OPTIONS"],
                 allow_headers=[
@@ -258,7 +260,7 @@ class ApiStack(Stack):
             default_cors_preflight_options=apigw.CorsOptions(
                 allow_origins=[
                     "http://localhost:5173",
-                    "https://d2lobh4zu3vjy5.cloudfront.net"
+                    "https://flirtdecks.com"
                 ],
                 allow_methods=["DELETE", "OPTIONS"],
                 allow_headers=[
@@ -325,7 +327,7 @@ class ApiStack(Stack):
             default_cors_preflight_options=apigw.CorsOptions(
                 allow_origins=[
                     "http://localhost:5173",
-                    "https://d2lobh4zu3vjy5.cloudfront.net"
+                    "https://flirtdecks.com"
                 ],
                 allow_methods=["GET", "PUT", "DELETE", "OPTIONS"],
                 allow_headers=[
@@ -449,6 +451,9 @@ class ApiStack(Stack):
                 "USER_POOL_ID": self.user_pool.user_pool_id,
                 "COGNITO_DOMAIN": "flirtdeck-kb-dev.auth.us-west-2.amazoncognito.com",
                 "COGNITO_CLIENT_ID": self.user_pool_client.user_pool_client_id,
-                "COGNITO_REDIRECT_URI": "https://d2lobh4zu3vjy5.cloudfront.net/auth/callback"
+                "COGNITO_REDIRECT_URI": "https://flirtdecks.com/auth/callback"
             },
-        )
+        )# Force rebuild Thu Nov 20 19:34:37 PST 2025
+# Test comment Thu Nov 20 21:55:09 PST 2025
+# Test comment Thu Nov 20 21:56:41 PST 2025
+# Force rebuild Thu Nov 20 22:56:28 PST 2025

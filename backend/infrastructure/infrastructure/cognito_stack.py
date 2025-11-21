@@ -103,6 +103,10 @@ class CognitoStack(Stack):
             # True would be for server-side apps that can keep secrets
             generate_secret=False,
             
+            supported_identity_providers=[
+                cognito.UserPoolClientIdentityProvider.GOOGLE
+            ],
+
             # OAuth 2.0 settings
             # These define how authentication flows work
             o_auth=cognito.OAuthSettings(
@@ -128,12 +132,21 @@ class CognitoStack(Stack):
                 # Will add CloudFront URL later when we deploy frontend
                 callback_urls=[
                     "http://localhost:3000",
-                    "http://localhost:3000/callback"
+                    "http://localhost:3000/callback",
+                    "http://localhost:3000/auth/callback",  
+                    "https://flirtdecks.com",
+                    "https://flirtdecks.com/callback",
+                    "https://flirtdecks.com/auth/callback", 
+                    "https://www.flirtdecks.com",
+                    "https://www.flirtdecks.com/callback",
+                    "https://www.flirtdecks.com/auth/callback" 
                 ],
                 
                 # Logout URLs: Where Cognito redirects after logout
                 logout_urls=[
-                    "http://localhost:3000"
+                    "http://localhost:3000",
+                    "https://flirtdecks.com",
+                    "https://www.flirtdecks.com"
                 ]
             ),
             

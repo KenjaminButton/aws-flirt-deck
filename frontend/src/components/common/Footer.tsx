@@ -23,10 +23,10 @@ const Footer = () => {
             <p className="text-gray-600 text-sm">
               Questions or feedback?{' '}
               <a 
-                href="mailto:support@flirtdeck.com"
+                href="mailto:support@flirtdecks.com"
                 className="text-purple-600 hover:text-purple-700 font-medium underline"
               >
-                support@flirtdeck.com
+                support@flirtdecks.com
               </a>
             </p>
           </div>

@@ -59,8 +59,8 @@ const BillingCancelPage = () => {
         {/* Help Text */}
         <p className="text-xs text-gray-500 mt-6">
           Questions? Contact us at{' '}
-          <a href="mailto:support@flirtdeck.com" className="text-purple-600 hover:underline">
-            support@flirtdeck.com
+          <a href="mailto:support@flirtdecks.com" className="text-purple-600 hover:underline">
+            support@flirtdecks.com
           </a>
         </p>
       </div>

@@ -14,6 +14,7 @@ from aws_cdk import (
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as origins,
     aws_s3_deployment as s3deploy,
+    aws_certificatemanager as acm,
     RemovalPolicy,
     CfnOutput,
     Duration,
@@ -75,6 +76,14 @@ class FrontendStack(Stack):
             self,
             "FlirtDeckDistribution",
             
+            # Custom domain names and SSL certificate
+            domain_names=["flirtdecks.com", "www.flirtdecks.com"],
+            certificate=acm.Certificate.from_certificate_arn(
+                self,
+                "Certificate",
+                certificate_arn="arn:aws:acm:us-east-1:811230534980:certificate/6676ab09-6ff1-4432-8a4f-0139d1d3a7cb"
+            ),
+
             # S3 origin with OAI
             default_behavior=cloudfront.BehaviorOptions(
                 origin=origins.S3Origin(
@@ -95,6 +104,8 @@ class FrontendStack(Stack):
                 compress=True
             ),
             
+
+
             # Default root object
             default_root_object="index.html",
             

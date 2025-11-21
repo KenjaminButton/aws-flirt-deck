@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-"""
-FlirtDeck CDK App - Main Entry Point
-
-This file is the entry point for the CDK application.
-It instantiates all infrastructure stacks and synthesizes them into CloudFormation.
-"""
-
 import os
 import aws_cdk as cdk
 
@@ -15,7 +7,7 @@ from infrastructure.cognito_stack import CognitoStack
 from infrastructure.api_stack import ApiStack
 from infrastructure.frontend_stack import FrontendStack
 from infrastructure.cicd_stack import CicdStack 
-
+from infrastructure.monitoring_stack import MonitoringStack
 
 
 # Create the CDK app instance
@@ -84,6 +76,14 @@ cicd_stack = CicdStack(
     description="CI/CD pipeline for automated FlirtDeck backend deployments"
 )
 
+# Deploy MonitoringStack to us-west-2
+# Creates CloudWatch Dashboard for monitoring
+monitoring_stack = MonitoringStack(
+    app,
+    "MonitoringStack",
+    env=env,
+    description="CloudWatch Dashboard for FlirtDeck monitoring"
+)
 
 # Synthesize all stacks into CloudFormation templates
 # This generates the JSON templates that AWS will use to create resources

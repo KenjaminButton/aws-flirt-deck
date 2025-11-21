@@ -46,7 +46,7 @@ const LoginPage = () => {
         {/* App branding */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            FlirtDeck
+            💕FlirtDecks
           </h1>
           <p className="text-gray-600">
             Never run out of things to say

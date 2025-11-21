@@ -2381,28 +2381,739 @@ Time: 2 hours | Cost: ~$0.02/month | Deploy time: 2-3 minutes
 
 ### **PHASE 9: Monitoring & Observability** (Days 25-26) 🟡
 
-#### Day 25: CloudWatch Dashboard
+# DAY 25: CloudWatch Dashboard - COMPLETE ✅
 
-**Tasks:**
-- [ ] Create `stacks/monitoring_stack.py`:
-  - CloudWatch Dashboard: "FlirtDeck Metrics"
-  - Widgets:
-    - API Gateway: Request count, 4XX errors, 5XX errors, latency
-    - Lambda: Invocations, errors, duration, throttles
-    - DynamoDB: Read/write capacity, throttled requests
-    - Custom metrics (next task)
-- [ ] Deploy monitoring stack
+## What We Built
+Basic CloudWatch dashboard showing API Gateway request metrics in real-time.
 
-**Verification:**
-- [ ] Open CloudWatch → Dashboards → FlirtDeck Metrics
-- [ ] See real-time data from your API calls
+**Dashboard Name:** FlirtDeck-Metrics
+**Location:** CloudWatch → Dashboards
+
+## Tasks Completed
+- [x] Created `monitoring_stack.py` with API Gateway widget
+- [x] Added MonitoringStack to `app.py`
+- [x] Deployed dashboard to AWS
+- [x] Verified real-time metrics displaying
+
+## The Code
+
+**File:** `backend/infrastructure/infrastructure/monitoring_stack.py`
+
+```python
+from aws_cdk import (
+    Stack,
+    Duration,
+    aws_cloudwatch as cloudwatch,
+)
+from constructs import Construct
+
+
+class MonitoringStack(Stack):
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)
+        
+        # Create CloudWatch Dashboard
+        dashboard = cloudwatch.Dashboard(
+            self,
+            "FlirtDeckDashboard",
+            dashboard_name="FlirtDeck-Metrics"
+        )
+        
+        # API Gateway Metrics Widget
+        api_widget = cloudwatch.GraphWidget(
+            title="API Gateway Requests",
+            left=[
+                cloudwatch.Metric(
+                    namespace="AWS/ApiGateway",
+                    metric_name="Count",
+                    dimensions_map={"ApiName": "flirtdeck-api"},
+                    statistic="Sum",
+                    period=Duration.minutes(5),
+                    label="Total Requests"
+                ),
+                cloudwatch.Metric(
+                    namespace="AWS/ApiGateway",
+                    metric_name="4XXError",
+                    dimensions_map={"ApiName": "flirtdeck-api"},
+                    statistic="Sum",
+                    period=Duration.minutes(5),
+                    label="4XX Errors",
+                    color=cloudwatch.Color.ORANGE
+                ),
+                cloudwatch.Metric(
+                    namespace="AWS/ApiGateway",
+                    metric_name="5XXError",
+                    dimensions_map={"ApiName": "flirtdeck-api"},
+                    statistic="Sum",
+                    period=Duration.minutes(5),
+                    label="5XX Errors",
+                    color=cloudwatch.Color.RED
+                )
+            ],
+            width=12,
+            height=6
+        )
+        
+        dashboard.add_widgets(api_widget)
+```
+
+**Updated:** `backend/infrastructure/app.py`
+```python
+# Add import
+from infrastructure.monitoring_stack import MonitoringStack
+
+# Add before app.synth()
+monitoring_stack = MonitoringStack(
+    app,
+    "MonitoringStack",
+    env=env,
+    description="CloudWatch Dashboard for FlirtDeck monitoring"
+)
+```
+
+## Deploy Commands
+```bash
+cd backend/infrastructure
+cdk deploy MonitoringStack
+```
+
+## What the Dashboard Shows
+
+**Metrics Displayed:**
+- **Total Requests** - Number of API calls (blue line)
+- **4XX Errors** - Client errors like 404, 401 (orange line)
+- **5XX Errors** - Server errors, our bugs (red line)
+
+**Time Range:** Last 3 hours by default (adjustable in console)
+**Update Frequency:** Every 5 minutes
+
+## Understanding the Metrics
+
+**Analogy:** Think of this like a restaurant counter:
+- **Total Requests** = How many customers walked in
+- **4XX Errors** = Customers who ordered something not on menu (their mistake)
+- **5XX Errors** = Kitchen caught on fire (our mistake)
+
+**Good Health:**
+- High Total Requests ✅
+- Low/zero 4XX Errors ✅
+- Zero 5XX Errors ✅
+
+## Viewing the Dashboard
+
+**AWS Console:**
+1. Go to CloudWatch
+2. Click "Dashboards" in left menu
+3. Select "FlirtDeck-Metrics"
+4. See live graphs
+
+**CLI:**
+```bash
+# List dashboards
+aws cloudwatch list-dashboards --region us-west-2
+
+# Get dashboard details
+aws cloudwatch get-dashboard \
+  --dashboard-name FlirtDeck-Metrics \
+  --region us-west-2
+```
+
+## Quick Troubleshooting
+
+**Problem:** No data showing
+- **Cause:** No API calls made yet
+- **Solution:** Use your app or call API manually
+
+**Problem:** Import error for Duration
+- **Fix:** Add `Duration` to imports from `aws_cdk`
+
+**Problem:** Dashboard not found
+- **Solution:** Re-deploy: `cdk deploy MonitoringStack`
+
+## Key Learnings
+
+**CloudWatch Metrics:**
+- Collected automatically by AWS services
+- No code changes needed
+- Stored for 15 months
+- 5-minute granularity (free tier)
+
+**Dashboard Benefits:**
+- Single pane of glass for all metrics
+- Catch issues before users report them
+- Understand usage patterns
+- Free to create and view
+
+## What's Next
+See Day 25.5 for adding:
+- Lambda metrics (function performance)
+- DynamoDB metrics (database usage)
+- API latency (response speed)
+
+## Status: COMPLETE ✅
+Time: 30 minutes | Cost: Free | Widgets: 1 (API Gateway)
 
 ---
 
+# DAY 25.5: Enhanced CloudWatch Dashboard (Optional)
+
+## Overview
+Add more monitoring widgets to get complete visibility into your application's health.
+
+**Current:** Just API Gateway metrics
+**Goal:** Add Lambda, DynamoDB, and latency monitoring
+
+## Tasks
+
+### Task 1: Add Lambda Metrics Widget
+**Shows:** Function invocations, errors, duration, throttles
+
+```python
+# Add to monitoring_stack.py after api_widget
+
+lambda_widget = cloudwatch.GraphWidget(
+    title="Lambda Functions",
+    left=[
+        # Invocations
+        cloudwatch.Metric(
+            namespace="AWS/Lambda",
+            metric_name="Invocations",
+            dimensions_map={"FunctionName": "GetMeFunction"},  # Your Lambda name
+            statistic="Sum",
+            period=Duration.minutes(5),
+            label="Invocations"
+        ),
+        # Errors
+        cloudwatch.Metric(
+            namespace="AWS/Lambda",
+            metric_name="Errors",
+            dimensions_map={"FunctionName": "GetMeFunction"},
+            statistic="Sum",
+            period=Duration.minutes(5),
+            label="Errors",
+            color=cloudwatch.Color.RED
+        ),
+        # Throttles
+        cloudwatch.Metric(
+            namespace="AWS/Lambda",
+            metric_name="Throttles",
+            dimensions_map={"FunctionName": "GetMeFunction"},
+            statistic="Sum",
+            period=Duration.minutes(5),
+            label="Throttles",
+            color=cloudwatch.Color.ORANGE
+        )
+    ],
+    right=[
+        # Duration (on separate axis)
+        cloudwatch.Metric(
+            namespace="AWS/Lambda",
+            metric_name="Duration",
+            dimensions_map={"FunctionName": "GetMeFunction"},
+            statistic="Average",
+            period=Duration.minutes(5),
+            label="Avg Duration (ms)"
+        )
+    ],
+    width=12,
+    height=6
+)
+
+dashboard.add_widgets(lambda_widget)
+```
+
+**What to change:**
+- Replace `"GetMeFunction"` with your actual Lambda function names
+- Add multiple metrics for different Lambdas if needed
+
+---
+
+### Task 2: Add DynamoDB Metrics Widget
+**Shows:** Read/write capacity consumption, throttled requests
+
+```python
+# Add to monitoring_stack.py after lambda_widget
+
+dynamodb_widget = cloudwatch.GraphWidget(
+    title="DynamoDB Usage",
+    left=[
+        # Consumed read capacity
+        cloudwatch.Metric(
+            namespace="AWS/DynamoDB",
+            metric_name="ConsumedReadCapacityUnits",
+            dimensions_map={"TableName": "flirtdeck-table"},
+            statistic="Sum",
+            period=Duration.minutes(5),
+            label="Read Capacity"
+        ),
+        # Consumed write capacity
+        cloudwatch.Metric(
+            namespace="AWS/DynamoDB",
+            metric_name="ConsumedWriteCapacityUnits",
+            dimensions_map={"TableName": "flirtdeck-table"},
+            statistic="Sum",
+            period=Duration.minutes(5),
+            label="Write Capacity"
+        )
+    ],
+    right=[
+        # Throttled requests (separate axis, should be near zero)
+        cloudwatch.Metric(
+            namespace="AWS/DynamoDB",
+            metric_name="UserErrors",
+            dimensions_map={"TableName": "flirtdeck-table"},
+            statistic="Sum",
+            period=Duration.minutes(5),
+            label="Throttled Requests",
+            color=cloudwatch.Color.RED
+        )
+    ],
+    width=12,
+    height=6
+)
+
+dashboard.add_widgets(dynamodb_widget)
+```
+
+**Note:** Since you use on-demand billing, capacity metrics might be low. This is normal!
+
+---
+
+### Task 3: Add API Latency Widget
+**Shows:** How fast your API responds (p50, p95, p99)
+
+```python
+# Add to monitoring_stack.py after dynamodb_widget
+
+latency_widget = cloudwatch.GraphWidget(
+    title="API Response Time",
+    left=[
+        # p50 (median) - 50% of requests faster than this
+        cloudwatch.Metric(
+            namespace="AWS/ApiGateway",
+            metric_name="Latency",
+            dimensions_map={"ApiName": "flirtdeck-api"},
+            statistic="p50",
+            period=Duration.minutes(5),
+            label="p50 (median)"
+        ),
+        # p95 - 95% of requests faster than this
+        cloudwatch.Metric(
+            namespace="AWS/ApiGateway",
+            metric_name="Latency",
+            dimensions_map={"ApiName": "flirtdeck-api"},
+            statistic="p95",
+            period=Duration.minutes(5),
+            label="p95",
+            color=cloudwatch.Color.ORANGE
+        ),
+        # p99 - 99% of requests faster than this (worst case)
+        cloudwatch.Metric(
+            namespace="AWS/ApiGateway",
+            metric_name="Latency",
+            dimensions_map={"ApiName": "flirtdeck-api"},
+            statistic="p99",
+            period=Duration.minutes(5),
+            label="p99 (worst case)",
+            color=cloudwatch.Color.RED
+        )
+    ],
+    width=12,
+    height=6
+)
+
+dashboard.add_widgets(latency_widget)
+```
+
+**Understanding Percentiles:**
+- **p50** = Half of requests are faster
+- **p95** = 95% are faster (typical "good" performance)
+- **p99** = 99% are faster (catches outliers)
+
+**Good targets:**
+- p50 < 100ms = Excellent
+- p95 < 200ms = Good
+- p99 < 500ms = Acceptable
+
+---
+
+## Complete Updated monitoring_stack.py
+
+**Full file with all widgets:**
+
+```python
+from aws_cdk import (
+    Stack,
+    Duration,
+    aws_cloudwatch as cloudwatch,
+)
+from constructs import Construct
+
+
+class MonitoringStack(Stack):
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)
+        
+        dashboard = cloudwatch.Dashboard(
+            self,
+            "FlirtDeckDashboard",
+            dashboard_name="FlirtDeck-Metrics"
+        )
+        
+        # Widget 1: API Gateway
+        api_widget = cloudwatch.GraphWidget(
+            title="API Gateway Requests",
+            left=[
+                cloudwatch.Metric(
+                    namespace="AWS/ApiGateway",
+                    metric_name="Count",
+                    dimensions_map={"ApiName": "flirtdeck-api"},
+                    statistic="Sum",
+                    period=Duration.minutes(5),
+                    label="Total Requests"
+                ),
+                cloudwatch.Metric(
+                    namespace="AWS/ApiGateway",
+                    metric_name="4XXError",
+                    dimensions_map={"ApiName": "flirtdeck-api"},
+                    statistic="Sum",
+                    period=Duration.minutes(5),
+                    label="4XX Errors",
+                    color=cloudwatch.Color.ORANGE
+                ),
+                cloudwatch.Metric(
+                    namespace="AWS/ApiGateway",
+                    metric_name="5XXError",
+                    dimensions_map={"ApiName": "flirtdeck-api"},
+                    statistic="Sum",
+                    period=Duration.minutes(5),
+                    label="5XX Errors",
+                    color=cloudwatch.Color.RED
+                )
+            ],
+            width=12,
+            height=6
+        )
+        
+        # Widget 2: Lambda Functions
+        lambda_widget = cloudwatch.GraphWidget(
+            title="Lambda Functions",
+            left=[
+                cloudwatch.Metric(
+                    namespace="AWS/Lambda",
+                    metric_name="Invocations",
+                    dimensions_map={"FunctionName": "ApiStack-GetMeFunction"},  # Update with your Lambda name
+                    statistic="Sum",
+                    period=Duration.minutes(5),
+                    label="Invocations"
+                ),
+                cloudwatch.Metric(
+                    namespace="AWS/Lambda",
+                    metric_name="Errors",
+                    dimensions_map={"FunctionName": "ApiStack-GetMeFunction"},
+                    statistic="Sum",
+                    period=Duration.minutes(5),
+                    label="Errors",
+                    color=cloudwatch.Color.RED
+                ),
+                cloudwatch.Metric(
+                    namespace="AWS/Lambda",
+                    metric_name="Throttles",
+                    dimensions_map={"FunctionName": "ApiStack-GetMeFunction"},
+                    statistic="Sum",
+                    period=Duration.minutes(5),
+                    label="Throttles",
+                    color=cloudwatch.Color.ORANGE
+                )
+            ],
+            right=[
+                cloudwatch.Metric(
+                    namespace="AWS/Lambda",
+                    metric_name="Duration",
+                    dimensions_map={"FunctionName": "ApiStack-GetMeFunction"},
+                    statistic="Average",
+                    period=Duration.minutes(5),
+                    label="Avg Duration (ms)"
+                )
+            ],
+            width=12,
+            height=6
+        )
+        
+        # Widget 3: DynamoDB
+        dynamodb_widget = cloudwatch.GraphWidget(
+            title="DynamoDB Usage",
+            left=[
+                cloudwatch.Metric(
+                    namespace="AWS/DynamoDB",
+                    metric_name="ConsumedReadCapacityUnits",
+                    dimensions_map={"TableName": "flirtdeck-table"},
+                    statistic="Sum",
+                    period=Duration.minutes(5),
+                    label="Read Capacity"
+                ),
+                cloudwatch.Metric(
+                    namespace="AWS/DynamoDB",
+                    metric_name="ConsumedWriteCapacityUnits",
+                    dimensions_map={"TableName": "flirtdeck-table"},
+                    statistic="Sum",
+                    period=Duration.minutes(5),
+                    label="Write Capacity"
+                )
+            ],
+            right=[
+                cloudwatch.Metric(
+                    namespace="AWS/DynamoDB",
+                    metric_name="UserErrors",
+                    dimensions_map={"TableName": "flirtdeck-table"},
+                    statistic="Sum",
+                    period=Duration.minutes(5),
+                    label="Throttled Requests",
+                    color=cloudwatch.Color.RED
+                )
+            ],
+            width=12,
+            height=6
+        )
+        
+        # Widget 4: API Latency
+        latency_widget = cloudwatch.GraphWidget(
+            title="API Response Time",
+            left=[
+                cloudwatch.Metric(
+                    namespace="AWS/ApiGateway",
+                    metric_name="Latency",
+                    dimensions_map={"ApiName": "flirtdeck-api"},
+                    statistic="p50",
+                    period=Duration.minutes(5),
+                    label="p50 (median)"
+                ),
+                cloudwatch.Metric(
+                    namespace="AWS/ApiGateway",
+                    metric_name="Latency",
+                    dimensions_map={"ApiName": "flirtdeck-api"},
+                    statistic="p95",
+                    period=Duration.minutes(5),
+                    label="p95",
+                    color=cloudwatch.Color.ORANGE
+                ),
+                cloudwatch.Metric(
+                    namespace="AWS/ApiGateway",
+                    metric_name="Latency",
+                    dimensions_map={"ApiName": "flirtdeck-api"},
+                    statistic="p99",
+                    period=Duration.minutes(5),
+                    label="p99",
+                    color=cloudwatch.Color.RED
+                )
+            ],
+            width=12,
+            height=6
+        )
+        
+        # Add all widgets to dashboard
+        dashboard.add_widgets(
+            api_widget,
+            lambda_widget,
+            dynamodb_widget,
+            latency_widget
+        )
+```
+
+---
+
+## Finding Your Lambda Function Names
+
+Your Lambda names have CloudFormation-generated suffixes. Find them:
+
+```bash
+# List all Lambda functions
+aws lambda list-functions \
+  --query 'Functions[?contains(FunctionName, `ApiStack`)].FunctionName' \
+  --output table \
+  --region us-west-2
+```
+
+Look for names like:
+- `ApiStack-GetMeFunction12345678-AbCdEfGh`
+
+Use the full name in your widget dimensions.
+
+---
+
+## Deploy Commands
+
+```bash
+cd backend/infrastructure
+cdk deploy MonitoringStack
+```
+
+---
+
+## Verification Checklist
+
+After deploying, check CloudWatch dashboard shows:
+- [ ] API Gateway widget (requests, errors)
+- [ ] Lambda widget (invocations, errors, duration)
+- [ ] DynamoDB widget (read/write capacity)
+- [ ] Latency widget (p50, p95, p99)
+
+**View:** CloudWatch → Dashboards → FlirtDeck-Metrics
+
+---
+
+## Understanding What You're Seeing
+
+**Lambda Duration:**
+- < 100ms = Fast
+- 100-500ms = Normal
+- > 1000ms = Investigate (maybe cold start)
+
+**DynamoDB Capacity:**
+- On-demand = Auto-scales, no throttling
+- Low numbers are fine (you're not at scale yet)
+
+**API Latency:**
+- p50 is typical user experience
+- p99 catches the slowest requests
+- Big gap between p50 and p99 = inconsistent performance
+
+---
+# DAY 25.5: Enhanced CloudWatch Dashboard - COMPLETE ✅
+
+## What We Added
+Enhanced CloudWatch dashboard with complete application monitoring.
+
+**Total Widgets:** 4
+**Dashboard:** FlirtDeck-Metrics
+
+## Widgets Created
+
+### 1. API Gateway Requests
+- Total requests
+- 4XX errors (client errors)
+- 5XX errors (server errors)
+
+### 2. Lambda Performance
+- Function: `ApiStack-GetMeFunction883856F2-7eJdlsSQ7BR8`
+- Invocations count
+- Errors
+- Throttles
+- Average duration (ms)
+
+### 3. DynamoDB Usage
+- Table: `flirtdeck-table`
+- Read capacity consumed
+- Write capacity consumed
+- Throttled requests (right axis)
+
+### 4. API Latency
+- p50 (median response time)
+- p95 (95th percentile)
+- p99 (worst case)
+
+## Code Changes
+
+**File:** `backend/infrastructure/infrastructure/monitoring_stack.py`
+
+Added 3 new widgets:
+- Lambda monitoring widget
+- DynamoDB usage widget  
+- API latency widget
+
+**Deploy Command:**
+```bash
+cd backend/infrastructure
+cdk deploy MonitoringStack
+```
+
+## Verification
+✅ CloudWatch → Dashboards → FlirtDeck-Metrics shows all 4 widgets
+✅ Real-time metrics displaying for each widget
+
+## What You Can Monitor Now
+- **API health:** Request volume, error rates
+- **Function performance:** Lambda invocations, errors, speed
+- **Database usage:** DynamoDB read/write activity
+- **User experience:** Response time percentiles
+
+## Status: COMPLETE ✅
+Time: 20 minutes | Cost: Free | Widgets: 4 (complete monitoring)
+---
+##  Enhancements
+
+### Add Alarms
+Create alerts when things go wrong:
+
+```python
+# Add to monitoring_stack.py
+alarm = cloudwatch.Alarm(
+    self,
+    "HighErrorRate",
+    metric=cloudwatch.Metric(
+        namespace="AWS/ApiGateway",
+        metric_name="5XXError",
+        dimensions_map={"ApiName": "flirtdeck-api"},
+        statistic="Sum",
+        period=Duration.minutes(5)
+    ),
+    threshold=5,  # Alert if >5 errors in 5 minutes
+    evaluation_periods=1,
+    alarm_name="FlirtDeck-High-5XX-Errors"
+)
+```
+
+### Add Custom Metrics
+Track business metrics (user signups, questions used):
+
+```python
+# In your Lambda code
+import boto3
+cloudwatch = boto3.client('cloudwatch')
+
+cloudwatch.put_metric_data(
+    Namespace='FlirtDeck',
+    MetricData=[{
+        'MetricName': 'UserSignups',
+        'Value': 1,
+        'Unit': 'Count'
+    }]
+)
+```
+
+---
+
+## Troubleshooting
+
+**No Lambda data:**
+- Lambda hasn't been invoked yet
+- Wrong function name in dimensions_map
+- Use full CDK-generated name
+
+**No DynamoDB data:**
+- Table hasn't been accessed
+- On-demand tables show low/zero metrics normally
+
+**Latency looks wrong:**
+- Check time range (zoom out to see patterns)
+- p99 always higher than p50 (this is normal)
+
+---
+
+## Status
+Optional enhancement. Complete when:
+- [x] All 4 widgets added
+- [x] Dashboard displays all metrics
+- [x] Lambda function names correct
+- [x] Real data visible
+
+**Time Estimate:** 15-20 minutes
+
+---
 #### Day 26: Custom Metrics & Alarms
 
 **Tasks:**
-- [ ] Add custom metrics to Lambdas:
+- [x] Add custom metrics to Lambdas:
   - User signups (CloudWatch PutMetric)
   - Connections created
   - Questions
@@ -2423,20 +3134,150 @@ Time: 2 hours | Cost: ~$0.02/month | Deploy time: 2-3 minutes
       }]
   )
 ```
-- [ ] Create CloudWatch Alarms:
+- [x] Create CloudWatch Alarms:
   - API Gateway 5XX errors > 5 in 5 minutes → SNS email
   - Lambda errors > 10 in 5 minutes → SNS email
   - No signups in 24 hours → SNS email (optional)
-- [ ] Create SNS topic and subscribe your email
-- [ ] Update monitoring stack with alarms
-- [ ] Deploy
+- [x] Create SNS topic and subscribe your email
+- [x] Update monitoring stack with alarms
+- [x] Deploy
 
 **Verification:**
-- [ ] Trigger error intentionally → Receive alarm email
-- [ ] Dashboard shows custom metrics
-- [ ] Use app → See metrics update in real-time
+- [x] Trigger error intentionally → Receive alarm email
+- [x] Dashboard shows custom metrics
+- [x] Use app → See metrics update in real-time
 
 **Checkpoint:** Full production monitoring in place!
+
+---
+
+# Login Authentication Fix - Nov 21, 2025
+
+## Problem
+After deploying to production (flirtdecks.com), users couldn't log in via Google OAuth. The error was:
+```
+Access to XMLHttpRequest blocked by CORS policy: 
+'Access-Control-Allow-Origin' header has a value 'http://localhost:5173' 
+that is not equal to the supplied origin.
+```
+
+## Root Causes (Multiple Issues)
+
+### 1. **API Gateway CORS Configuration**
+- **Issue:** API Gateway OPTIONS methods had old CloudFront domain (`d2lobh4zu3vjy5.cloudfront.net`) hardcoded
+- **Location:** `backend/infrastructure/infrastructure/api_stack.py` lines 187, 263, 330, 454
+- **Fix:** Replaced all occurrences with `https://flirtdecks.com`
+
+### 2. **CDK Cache Not Detecting Changes**
+- **Issue:** CDK said "no differences" even after updating code
+- **Cause:** Python bytecode cache (`.pyc` files and `__pycache__` directories)
+- **Fix:** Clear cache before deploying:
+```bash
+  find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
+  find . -type f -name "*.pyc" -delete
+  rm -rf cdk.out
+```
+
+### 3. **Lambda Code Packaging Broken**
+- **Issue:** Lambda returned 502 error - `Unable to import module 'auth.token_exchange'`
+- **Cause:** Earlier manual Lambda update only uploaded `shared/` folder, overwriting handler files
+- **Fix:** Properly packaged Lambda with correct structure:
+```bash
+  /tmp/lambda_deploy/
+  ├── auth/
+  │   ├── token_exchange.py
+  │   └── get_me.py
+  └── shared/
+      ├── responses.py
+      └── dynamodb.py
+```
+
+## The Fix Process
+
+1. **Updated CORS origins in api_stack.py:**
+```bash
+   sed -i '' 's|https://d2lobh4zu3vjy5.cloudfront.net|https://flirtdecks.com|g' api_stack.py
+```
+
+2. **Fixed Lambda handler paths** (they were pointing to wrong directories)
+
+3. **Cleared all caches:**
+```bash
+   find . -name "__pycache__" -exec rm -rf {} +
+   find . -name "*.pyc" -delete
+   rm -rf cdk.out
+```
+
+4. **Manually rebuilt and uploaded token_exchange Lambda:**
+```bash
+   cd backend/lambda_functions
+   mkdir -p /tmp/lambda_deploy
+   cp -r auth /tmp/lambda_deploy/
+   cp -r shared /tmp/lambda_deploy/
+   cd /tmp/lambda_deploy
+   zip -r /tmp/token_exchange.zip .
+   
+   aws lambda update-function-code \
+     --function-name ApiStack-TokenExchangeFunction9FD9C95E-fRL2dCCEmNRr \
+     --zip-file fileb:///tmp/token_exchange.zip
+```
+
+5. **Deployed API Gateway changes:**
+```bash
+   cd backend/infrastructure
+   cdk deploy ApiStack
+```
+
+## Lessons Learned
+
+### 1. Always Clear Cache Before Deploying
+Python bytecode cache can cause CDK to miss changes. Create a deployment wrapper:
+```bash
+# backend/infrastructure/deploy.sh
+find . -name "__pycache__" -exec rm -rf {} + 2>/dev/null
+find . -name "*.pyc" -delete
+rm -rf cdk.out
+cdk deploy "$@"
+```
+
+### 2. Never Manually Update Lambda Code
+Manual updates (via `aws lambda update-function-code`) can break CDK's tracking. Always use CDK for deployments.
+
+### 3. Verify What's Actually Deployed
+Don't trust CDK alone. Check actual AWS resources:
+```bash
+# Check API Gateway CORS
+aws apigateway get-integration-response \
+  --rest-api-id $REST_API_ID \
+  --resource-id <resource-id> \
+  --http-method OPTIONS \
+  --status-code 204
+
+# Check Lambda handler
+aws lambda get-function-configuration \
+  --function-name <function-name> \
+  --query 'Handler'
+
+# Check Lambda logs
+aws logs tail /aws/lambda/<function-name> --follow
+```
+
+### 4. Debug CORS Systematically
+1. Check if OPTIONS request even reaches Lambda (CloudWatch logs)
+2. Check API Gateway integration response template
+3. Check Lambda response headers
+4. Check browser console for actual error
+
+## Current Status
+✅ Login working at https://flirtdecks.com  
+✅ CORS properly configured for production domain  
+✅ All Lambdas properly packaged with correct file structure  
+
+## Next Steps
+- [x] Create deployment script to automate cache clearing
+- [x] Update all Lambda functions to ensure proper packaging (not just token_exchange)
+- [x] Add monitoring/alerts for CORS errors
+- [x] Document deployment process in README
 
 ---
 

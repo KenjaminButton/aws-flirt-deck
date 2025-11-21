@@ -22,7 +22,7 @@ def handler(event, context):
         user_id = claims.get('sub')
         
         if not user_id:
-            return error_response("Unauthorized", 401, "UNAUTHORIZED")
+            return error_response("Unauthorized", 401, "UNAUTHORIZED", event=event)
         
         # Get IDs from path
         path_params = event.get('pathParameters', {})
@@ -30,19 +30,18 @@ def handler(event, context):
         usage_id = path_params.get('usage_id')
         
         if not connection_id or not usage_id:
-            return error_response("Missing parameters", 400, "MISSING_PARAMETER")
+            return error_response("Missing parameters", 400, "MISSING_PARAMETER", event=event)
         
         # Parse request body
         body = json.loads(event.get('body', '{}'))
         their_answer = body.get('their_answer', '')
         my_answer = body.get('my_answer', '')
         
-
         # Validate answer lengths
         if len(their_answer) > 1000:
-            return error_response("Their answer exceeds 1000 characters", 400, "ANSWER_TOO_LONG")
+            return error_response("Their answer exceeds 1000 characters", 400, "ANSWER_TOO_LONG", event=event)
         if len(my_answer) > 1000:
-            return error_response("My answer exceeds 1000 characters", 400, "ANSWER_TOO_LONG")
+            return error_response("My answer exceeds 1000 characters", 400, "ANSWER_TOO_LONG", event=event)
 
         # Verify connection belongs to user
         connection = table.get_item(
@@ -53,7 +52,7 @@ def handler(event, context):
         ).get('Item')
         
         if not connection:
-            return error_response("Connection not found", 404, "NOT_FOUND")
+            return error_response("Connection not found", 404, "NOT_FOUND", event=event)
         
         # Update the usage record
         timestamp = datetime.utcnow().isoformat()
@@ -84,8 +83,8 @@ def handler(event, context):
             'my_answer': updated_item['my_answer'],
             'created_at': updated_item['created_at'],
             'updated_at': updated_item.get('updated_at', updated_item['created_at'])
-        })
+        }, event=event)
     
     except Exception as e:
         print(f"Error: {str(e)}")
-        return error_response("Internal server error", 500, "INTERNAL_ERROR")
+        return error_response("Internal server error", 500, "INTERNAL_ERROR", event=event)

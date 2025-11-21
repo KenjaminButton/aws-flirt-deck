@@ -1,7 +1,5 @@
 """
 GET /questions/random Lambda Handler
-
-Returns a random conversation starter question from a specified category.
 """
 
 import json
@@ -27,7 +25,7 @@ def get_used_question_ids(user_id: str, connection_id: str) -> list:
         return [item['question_id'] for item in response.get('Items', [])]
     except Exception as e:
         print(f"Error getting used questions: {str(e)}")
-        return []  # If error, return empty (fail open)
+        return []
 
 
 def get_questions_by_category(category: str) -> list:
@@ -60,20 +58,22 @@ def handler(event, context):
     try:
         query_params = event.get('queryStringParameters') or {}
         category = query_params.get('category')
-        connection_id = query_params.get('connection_id')  # NEW: Optional parameter
+        connection_id = query_params.get('connection_id')
         
         if not category:
             return error_response(
                 "Missing 'category' query parameter",
                 status_code=400,
-                error_code="MISSING_CATEGORY"
+                error_code="MISSING_CATEGORY",
+                event=event
             )
         
         if category not in VALID_CATEGORIES:
             return error_response(
                 f"Invalid category '{category}'. Must be one of: {', '.join(VALID_CATEGORIES)}",
                 status_code=400,
-                error_code="INVALID_CATEGORY"
+                error_code="INVALID_CATEGORY",
+                event=event
             )
         
         # Get all questions in category
@@ -83,12 +83,12 @@ def handler(event, context):
             return error_response(
                 f"No questions found in category '{category}'",
                 status_code=404,
-                error_code="NO_QUESTIONS_FOUND"
+                error_code="NO_QUESTIONS_FOUND",
+                event=event
             )
         
-        # NEW: If connection_id provided, filter out already-used questions
+        # If connection_id provided, filter out already-used questions
         if connection_id:
-            # Get user ID from JWT
             authorizer = event.get('requestContext', {}).get('authorizer', {})
             claims = authorizer.get('claims', {})
             user_id = claims.get('sub')
@@ -97,14 +97,14 @@ def handler(event, context):
                 used_ids = get_used_question_ids(user_id, connection_id)
                 print(f"Found {len(used_ids)} used questions for connection {connection_id}")
                 
-                # Filter out used questions
                 questions = [q for q in questions if q['question_id'] not in used_ids]
                 
                 if not questions:
                     return error_response(
                         f"All questions in '{category}' category have been used!",
                         status_code=404,
-                        error_code="ALL_QUESTIONS_USED"
+                        error_code="ALL_QUESTIONS_USED",
+                        event=event
                     )
         
         # Pick random from available questions
@@ -112,8 +112,8 @@ def handler(event, context):
         print(f"Selected question: {random_question['question_id']}")
         
         clean_question = clean_question_for_response(random_question)
-        return success_response(clean_question)
+        return success_response(clean_question, event=event)
     
     except Exception as e:
         print(f"Error: {str(e)}")
-        return error_response("Internal server error", status_code=500, error_code="INTERNAL_ERROR")
+        return error_response("Internal server error", status_code=500, error_code="INTERNAL_ERROR", event=event)

@@ -1,16 +1,5 @@
 """
 POST /connections/{connection_id}/usage Lambda Handler
-
-Records when a user uses a question with a connection.
-Stores both their answer and your answer.
-
-Flow:
-1. Get user_id from JWT token
-2. Get connection_id from path
-3. Get question_id, their_answer, my_answer from body
-4. Validate connection belongs to user
-5. Create usage record in DynamoDB
-6. Return usage object
 """
 
 import json
@@ -25,9 +14,7 @@ from shared.responses import success_response, error_response
 from shared.dynamodb import table
 
 def handler(event, context):
-    """
-    Lambda handler for POST /connections/{connection_id}/usage
-    """
+    """Lambda handler for POST /connections/{connection_id}/usage"""
     
     print(f"Received event: {json.dumps(event)}")
     
@@ -38,14 +25,14 @@ def handler(event, context):
         user_id = claims.get('sub')
         
         if not user_id:
-            return error_response("Unauthorized", 401, "UNAUTHORIZED")
+            return error_response("Unauthorized", 401, "UNAUTHORIZED", event=event)
         
         # Get connection_id from path
         path_params = event.get('pathParameters', {})
         connection_id = path_params.get('connection_id')
         
         if not connection_id:
-            return error_response("Missing connection_id", 400, "MISSING_PARAMETER")
+            return error_response("Missing connection_id", 400, "MISSING_PARAMETER", event=event)
         
         # Parse request body
         body = json.loads(event.get('body', '{}'))
@@ -55,13 +42,13 @@ def handler(event, context):
         
         # Validate answer lengths
         if len(their_answer) > 1000:
-            return error_response("Their answer exceeds 1000 characters", 400, "ANSWER_TOO_LONG")
+            return error_response("Their answer exceeds 1000 characters", 400, "ANSWER_TOO_LONG", event=event)
         if len(my_answer) > 1000:
-            return error_response("My answer exceeds 1000 characters", 400, "ANSWER_TOO_LONG")
+            return error_response("My answer exceeds 1000 characters", 400, "ANSWER_TOO_LONG", event=event)
 
         # Validate required fields
         if not question_id:
-            return error_response("Missing question_id", 400, "MISSING_FIELD")
+            return error_response("Missing question_id", 400, "MISSING_FIELD", event=event)
         
         # Verify connection exists and belongs to user
         connection = table.get_item(
@@ -72,7 +59,7 @@ def handler(event, context):
         ).get('Item')
         
         if not connection:
-            return error_response("Connection not found", 404, "NOT_FOUND")
+            return error_response("Connection not found", 404, "NOT_FOUND", event=event)
         
         # Create usage record
         timestamp = datetime.utcnow().isoformat()
@@ -108,8 +95,8 @@ def handler(event, context):
             'created_at': timestamp
         }
         
-        return success_response(response_data, 201)
+        return success_response(response_data, 201, event=event)
     
     except Exception as e:
         print(f"Error creating usage: {str(e)}")
-        return error_response("Internal server error", 500, "INTERNAL_ERROR")
+        return error_response("Internal server error", 500, "INTERNAL_ERROR", event=event)

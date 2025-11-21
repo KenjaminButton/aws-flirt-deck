@@ -1,19 +1,4 @@
 # Force redeploy - updated CORS headers v2
-
-"""
-GET /auth/me Lambda Handler
-
-Returns the authenticated user's profile.
-This is called after Google OAuth login to fetch/create user data.
-
-Flow:
-1. API Gateway validates JWT token and passes user info
-2. Extract user ID from Cognito claims
-3. Check if user exists in DynamoDB
-4. If first login, create user profile
-5. Return user data to frontend
-"""
-
 import json
 import sys
 import os
@@ -57,14 +42,16 @@ def handler(event, context):
             return error_response(
                 "Missing user ID in token",
                 status_code=401,
-                error_code="INVALID_TOKEN"
+                error_code="INVALID_TOKEN",
+                event=event
             )
         
         if not email:
             return error_response(
                 "Missing email in token",
                 status_code=401,
-                error_code="INVALID_TOKEN"
+                error_code="INVALID_TOKEN",
+                event=event
             )
         
         # Check if user profile exists
@@ -90,7 +77,7 @@ def handler(event, context):
             'updated_at': profile.get('updated_at')
         }
         
-        return success_response(clean_profile)
+        return success_response(clean_profile, event=event)
     
     except Exception as e:
         # Log error for CloudWatch debugging
@@ -100,5 +87,7 @@ def handler(event, context):
         return error_response(
             "Internal server error",
             status_code=500,
-            error_code="INTERNAL_ERROR"
+            error_code="INTERNAL_ERROR",
+            event=event
         )
+
