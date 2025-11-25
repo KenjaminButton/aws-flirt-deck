@@ -2555,7 +2555,7 @@ Time: 30 minutes | Cost: Free | Widgets: 1 (API Gateway)
 
 ---
 
-# DAY 25.5: Enhanced CloudWatch Dashboard (Optional)
+# DAY 25.5: Enhanced CloudWatch Dashboard
 
 ## Overview
 Add more monitoring widgets to get complete visibility into your application's health.
