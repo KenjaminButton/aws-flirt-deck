@@ -9,7 +9,7 @@
 
 > A serverless, multi-tenant SaaS application that helps users improve their dating conversations with curated question suggestions.
 
-**[Live Demo](https://flirtdecks.com)** | **[Architecture Diagram](#architecture)** | **[GitHub Repo](https://github.com/KenjaminButton/aws-flirt-deck)**
+**[Live Demo](https://flirtdecks.com)** | **[Architecture Diagram](https://raw.githubusercontent.com/KenjaminButton/aws-flirt-deck/refs/heads/main/docs/diagrams/flirtdeck_architecture.png)** 
 
 ---
 
