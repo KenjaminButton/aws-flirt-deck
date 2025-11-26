@@ -13,6 +13,10 @@
 
 ---
 
+![FlirtDeck Demo GIF](./FlirtDeckDemo.gif)
+
+---
+
 ## 📋 Project Overview
 
 💕FlirtDecks is a full-stack AWS portfolio project demonstrating modern cloud architecture patterns. Users authenticate via Google OAuth, receive conversation-starting questions, track their connections, and upgrade to premium features via Stripe subscriptions. The application is hosted on a custom domain (flirtdecks.com) using Route 53 DNS and CloudFront CDN.
