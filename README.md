@@ -13,7 +13,13 @@
 
 ---
 
-![FlirtDeck Demo GIF](./FlirtDeckDemo.gif)
+<div align="center">
+  
+![💕FlirtDecks Demo](docs/demo/demo.gif)
+
+*Live demo: Sign in with Google → Get conversation questions → Track connections*
+
+</div>
 
 ---
 
@@ -56,6 +62,54 @@
 | **ACM** | SSL/TLS certificates | Free SSL certs for custom domain |
 | **CodePipeline** | CI/CD orchestration | Automated deployments from Git push |
 | **CodeBuild** | Build & test runner | Containerized build environment |
+
+---
+
+## 📸 AWS Infrastructure Screenshots
+
+<details open>
+<summary><b>📊 CloudWatch Monitoring Dashboard</b></summary>
+
+<br>
+
+![CloudWatch Dashboard showing Lambda invocations, API Gateway metrics, and DynamoDB capacity](docs/screenshots/cloudwatch-dashboard.png)
+
+*Real-time monitoring of API requests, Lambda performance, and database usage across all services*
+
+</details>
+
+<details open>
+<summary><b>🗄️ DynamoDB Single-Table Design</b></summary>
+
+<br>
+
+![DynamoDB table structure showing PK/SK pattern for multi-tenant data](docs/screenshots/dynamodb-table.png)
+
+*Single-table design with partition key (PK) and sort key (SK) enabling efficient multi-tenant data isolation*
+
+</details>
+
+<details open>
+<summary><b>⚡ Lambda Functions</b></summary>
+
+<br>
+
+![Four Lambda functions handling authentication, questions, connections, and billing](docs/screenshots/lambda-functions.png)
+
+*Serverless compute layer with 4 Python functions processing all backend business logic*
+
+</details>
+
+<details open>
+<summary><b>🚀 CI/CD Pipeline</b></summary>
+
+<br>
+
+![CodePipeline showing automated deployment stages from GitHub to production](docs/screenshots/codepipeline.png)
+
+*Fully automated deployment pipeline: Git push → Build → Deploy to AWS (3 minutes total)*
+
+</details>
 
 ---
 
