@@ -1,5 +1,16 @@
 version: 0.2
 
+# =============================================================================
+# FlirtDeck CI/CD Build Specification
+# =============================================================================
+# This file tells CodeBuild how to build and deploy the FlirtDeck infrastructure.
+# 
+# IMPORTANT: CicdStack is intentionally EXCLUDED from pipeline deployments!
+# Deploying CicdStack through the pipeline can cause "pipeline suicide" - where
+# the pipeline deletes its own IAM role mid-execution and crashes.
+# Always deploy CicdStack manually: `cdk deploy CicdStack`
+# =============================================================================
+
 phases:
   install:
     runtime-versions:
@@ -24,7 +35,7 @@ phases:
       - echo "Verifying Stripe layer was created..."
       - ls -la backend/layers/stripe/stripe-layer.zip
       
-      # ✅ CRITICAL FIX: Export environment variables for CDK
+      # Export environment variables for CDK (Cognito Google OAuth)
       - echo "Exporting Google OAuth credentials..."
       - export GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
       - export GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
@@ -32,9 +43,20 @@ phases:
       - echo "Synthesizing CDK stacks..."
       - cd backend/infrastructure
       - cdk synth
-      - echo "Deploying all stacks..."
-      - cdk deploy --all --require-approval never
+      
+      # =======================================================================
+      # DEPLOY APPLICATION STACKS ONLY - NOT CicdStack!
+      # =======================================================================
+      # We explicitly list stacks instead of using --all to prevent the pipeline
+      # from modifying its own infrastructure (CicdStack) during execution.
+      # 
+      # If you need to update CicdStack, do it manually from your local machine:
+      #   cd backend/infrastructure && cdk deploy CicdStack
+      # =======================================================================
+      - echo "Deploying application stacks (excluding CicdStack)..."
+      - cdk deploy DatabaseStack CognitoStack ApiStack --require-approval never
 
   post_build:
     commands:
       - echo "Build completed successfully!"
+      - echo "Note: CicdStack was intentionally skipped. Deploy manually if needed."
